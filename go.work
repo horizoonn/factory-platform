@@ -1,0 +1,11 @@
+go 1.26.2
+
+use (
+	./assembly
+	./iam
+	./inventory
+	./order
+	./payment
+	./platform
+	./shared
+)
