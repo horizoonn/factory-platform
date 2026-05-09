@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package events.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/horizoonn/factory-platform.git/shared/pkg/proto/events/v1;eventsv1";
+
+message OrderPaid {
+    string event_uuid = 1;
+    string order_uuid = 2;
+    string user_uuid = 3;
+    string payment_method = 4;
+    string transaction_uuid = 5;
+    google.protobuf.Timestamp occurred_at = 6;
+}
+
+message ShipAssembled {
+    string event_uuid = 1;
+    string order_uuid = 2;
+    string user_uuid = 3;
+    int64 build_time_sec = 4;
+    google.protobuf.Timestamp occurred_at = 5;
+}
