@@ -1,17 +1,18 @@
-package grpcv1
+package inventoryv1
 
 import (
 	"context"
 	"errors"
 
 	"github.com/google/uuid"
-	"github.com/horizoonn/factory-platform.git/inventory/internal/domain"
-	inventoryv1 "github.com/horizoonn/factory-platform.git/shared/pkg/proto/inventory/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/horizoonn/factory-platform.git/inventory/internal/domain"
+	inventorypb "github.com/horizoonn/factory-platform.git/shared/pkg/proto/inventory/v1"
 )
 
-func (s *InventoryServer) GetPart(ctx context.Context, req *inventoryv1.GetPartRequest) (*inventoryv1.GetPartResponse, error) {
+func (s *InventoryServer) GetPart(ctx context.Context, req *inventorypb.GetPartRequest) (*inventorypb.GetPartResponse, error) {
 	id, err := uuid.Parse(req.GetUuid())
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid uuid")
@@ -19,14 +20,14 @@ func (s *InventoryServer) GetPart(ctx context.Context, req *inventoryv1.GetPartR
 
 	part, err := s.inventoryService.GetPart(ctx, id)
 	if err != nil {
-		if errors.Is(err, domain.ErrPartNotFound) {
+		if errors.Is(err, domain.ErrNotFound) {
 			return nil, status.Errorf(codes.NotFound, "part with id='%s' not found", req.GetUuid())
 		}
 
 		return nil, status.Errorf(codes.Internal, "internal error")
 	}
 
-	return &inventoryv1.GetPartResponse{
+	return &inventorypb.GetPartResponse{
 		Part: partToProto(&part),
 	}, nil
 }

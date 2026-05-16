@@ -1,14 +1,15 @@
-package grpcv1
+package inventoryv1
 
 import (
 	"context"
 
-	inventoryv1 "github.com/horizoonn/factory-platform.git/shared/pkg/proto/inventory/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	inventorypb "github.com/horizoonn/factory-platform.git/shared/pkg/proto/inventory/v1"
 )
 
-func (s *InventoryServer) ListParts(ctx context.Context, req *inventoryv1.ListPartsRequest) (*inventoryv1.ListPartsResponse, error) {
+func (s *InventoryServer) ListParts(ctx context.Context, req *inventorypb.ListPartsRequest) (*inventorypb.ListPartsResponse, error) {
 	filter, err := filterToDomain(req.GetFilter())
 	if err != nil {
 		return nil, err
@@ -18,7 +19,7 @@ func (s *InventoryServer) ListParts(ctx context.Context, req *inventoryv1.ListPa
 		return nil, status.Errorf(codes.Internal, "internal error")
 	}
 
-	return &inventoryv1.ListPartsResponse{
+	return &inventorypb.ListPartsResponse{
 		Parts: partsToProto(parts),
 	}, nil
 }

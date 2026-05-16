@@ -1,16 +1,17 @@
-package grpcv1
+package inventoryv1
 
 import (
 	"github.com/google/uuid"
-	"github.com/horizoonn/factory-platform.git/inventory/internal/domain"
-	inventoryv1 "github.com/horizoonn/factory-platform.git/shared/pkg/proto/inventory/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
+
+	"github.com/horizoonn/factory-platform.git/inventory/internal/domain"
+	inventorypb "github.com/horizoonn/factory-platform.git/shared/pkg/proto/inventory/v1"
 )
 
-func partsToProto(parts []domain.Part) []*inventoryv1.Part {
-	partsProto := make([]*inventoryv1.Part, 0, len(parts))
+func partsToProto(parts []domain.Part) []*inventorypb.Part {
+	partsProto := make([]*inventorypb.Part, 0, len(parts))
 	for _, part := range parts {
 		partsProto = append(partsProto, partToProto(&part))
 	}
@@ -18,15 +19,15 @@ func partsToProto(parts []domain.Part) []*inventoryv1.Part {
 	return partsProto
 }
 
-func partToProto(part *domain.Part) *inventoryv1.Part {
+func partToProto(part *domain.Part) *inventorypb.Part {
 	var tags []string
 	if part.Tags != nil {
 		tags = part.Tags
 	}
 
-	var meta map[string]*inventoryv1.Value
+	var meta map[string]*inventorypb.Value
 	if part.Metadata != nil {
-		meta = make(map[string]*inventoryv1.Value, len(part.Metadata))
+		meta = make(map[string]*inventorypb.Value, len(part.Metadata))
 		for k, v := range part.Metadata {
 			meta[k] = valueToProto(v)
 		}
@@ -42,9 +43,9 @@ func partToProto(part *domain.Part) *inventoryv1.Part {
 		updatedAtProto = timestamppb.New(*part.UpdatedAt)
 	}
 
-	var dimensionsProto *inventoryv1.Dimensions
+	var dimensionsProto *inventorypb.Dimensions
 	if part.Dimensions != nil {
-		dimensionsProto = &inventoryv1.Dimensions{
+		dimensionsProto = &inventorypb.Dimensions{
 			Length: part.Dimensions.Length,
 			Width:  part.Dimensions.Width,
 			Height: part.Dimensions.Height,
@@ -52,22 +53,22 @@ func partToProto(part *domain.Part) *inventoryv1.Part {
 		}
 	}
 
-	var manufacturerProto *inventoryv1.Manufacturer
+	var manufacturerProto *inventorypb.Manufacturer
 	if part.Manufacturer != nil {
-		manufacturerProto = &inventoryv1.Manufacturer{
+		manufacturerProto = &inventorypb.Manufacturer{
 			Name:    part.Manufacturer.Name,
 			Country: part.Manufacturer.Country,
 			Website: part.Manufacturer.Website,
 		}
 	}
 
-	return &inventoryv1.Part{
+	return &inventorypb.Part{
 		Uuid:          part.ID.String(),
 		Name:          part.Name,
 		Description:   part.Description,
 		Price:         part.Price,
 		StockQuantity: part.StockQuantity,
-		Category:      inventoryv1.Category(int32(part.Category)), //nolint:gosec
+		Category:      inventorypb.Category(int32(part.Category)), //nolint:gosec
 		Dimensions:    dimensionsProto,
 		Manufacturer:  manufacturerProto,
 		Tags:          tags,
@@ -77,41 +78,41 @@ func partToProto(part *domain.Part) *inventoryv1.Part {
 	}
 }
 
-func valueToProto(v *domain.Value) *inventoryv1.Value {
+func valueToProto(v *domain.Value) *inventorypb.Value {
 	if v == nil {
-		return &inventoryv1.Value{}
+		return &inventorypb.Value{}
 	}
 	switch {
 	case v.String != nil:
-		return &inventoryv1.Value{
-			Kind: &inventoryv1.Value_StringValue{
+		return &inventorypb.Value{
+			Kind: &inventorypb.Value_StringValue{
 				StringValue: *v.String,
 			},
 		}
 	case v.Int64 != nil:
-		return &inventoryv1.Value{
-			Kind: &inventoryv1.Value_Int64Value{
+		return &inventorypb.Value{
+			Kind: &inventorypb.Value_Int64Value{
 				Int64Value: *v.Int64,
 			},
 		}
 	case v.Float64 != nil:
-		return &inventoryv1.Value{
-			Kind: &inventoryv1.Value_DoubleValue{
+		return &inventorypb.Value{
+			Kind: &inventorypb.Value_DoubleValue{
 				DoubleValue: *v.Float64,
 			},
 		}
 	case v.Bool != nil:
-		return &inventoryv1.Value{
-			Kind: &inventoryv1.Value_BoolValue{
+		return &inventorypb.Value{
+			Kind: &inventorypb.Value_BoolValue{
 				BoolValue: *v.Bool,
 			},
 		}
 	default:
-		return &inventoryv1.Value{}
+		return &inventorypb.Value{}
 	}
 }
 
-func filterToDomain(filter *inventoryv1.PartsFilter) (domain.PartsFilter, error) {
+func filterToDomain(filter *inventorypb.PartsFilter) (domain.PartsFilter, error) {
 	if filter == nil {
 		return domain.PartsFilter{}, nil
 	}
