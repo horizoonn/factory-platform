@@ -31,6 +31,36 @@ type Part struct {
 	UpdatedAt     *time.Time
 }
 
+func NewPart(
+	id uuid.UUID,
+	name string,
+	description string,
+	price float64,
+	stockQuantity int64,
+	category int32,
+	dimensions *Dimensions,
+	manufacturer *Manufacturer,
+	tags []string,
+	metadata map[string]*Value,
+	createdAt *time.Time,
+	updatedAt *time.Time,
+) *Part {
+	return &Part{
+		ID:            id,
+		Name:          name,
+		Description:   description,
+		Price:         price,
+		StockQuantity: stockQuantity,
+		Category:      Category(category),
+		Dimensions:    dimensions,
+		Manufacturer:  manufacturer,
+		Tags:          tags,
+		Metadata:      metadata,
+		CreatedAt:     createdAt,
+		UpdatedAt:     updatedAt,
+	}
+}
+
 type Dimensions struct {
 	Length float64
 	Width  float64

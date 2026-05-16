@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+
 	"github.com/horizoonn/factory-platform.git/inventory/internal/domain"
 )
 
