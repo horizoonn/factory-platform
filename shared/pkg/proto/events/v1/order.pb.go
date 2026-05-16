@@ -7,12 +7,13 @@
 package eventsv1
 
 import (
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
+
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 )
 
 const (
@@ -219,12 +220,15 @@ func file_events_v1_order_proto_rawDescGZIP() []byte {
 	return file_events_v1_order_proto_rawDescData
 }
 
-var file_events_v1_order_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
-var file_events_v1_order_proto_goTypes = []any{
-	(*OrderPaid)(nil),             // 0: events.v1.OrderPaid
-	(*ShipAssembled)(nil),         // 1: events.v1.ShipAssembled
-	(*timestamppb.Timestamp)(nil), // 2: google.protobuf.Timestamp
-}
+var (
+	file_events_v1_order_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+	file_events_v1_order_proto_goTypes  = []any{
+		(*OrderPaid)(nil),             // 0: events.v1.OrderPaid
+		(*ShipAssembled)(nil),         // 1: events.v1.ShipAssembled
+		(*timestamppb.Timestamp)(nil), // 2: google.protobuf.Timestamp
+	}
+)
+
 var file_events_v1_order_proto_depIdxs = []int32{
 	2, // 0: events.v1.OrderPaid.occurred_at:type_name -> google.protobuf.Timestamp
 	2, // 1: events.v1.ShipAssembled.occurred_at:type_name -> google.protobuf.Timestamp
