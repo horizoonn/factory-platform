@@ -9,6 +9,7 @@ vars:
   BUF_VERSION: '1.69.0'
   PROTOC_GEN_GO_VERSION: 'v1.36.11'
   PROTOC_GEN_GO_GRPC_VERSION: 'v1.6.1'
+  GOOSE_VERSION: 'v3.27.1'
 
   BIN_DIR: '{{.ROOT_DIR}}/bin'
   GOLANGCI_LINT: '{{.BIN_DIR}}/golangci-lint'
@@ -17,6 +18,7 @@ vars:
   BUF: '{{.BIN_DIR}}/buf'
   PROTOC_GEN_GO: '{{.BIN_DIR}}/protoc-gen-go'
   PROTOC_GEN_GO_GRPC: '{{.BIN_DIR}}/protoc-gen-go-grpc'
+  GOOSE: '{{.BIN_DIR}}/goose'
 
   MODULES: assembly inventory order payment platform iam notification shared
 
@@ -182,3 +184,53 @@ tasks:
             (cd "$mod" && go mod tidy -compat=1.26) || exit 1
           fi
         done
+  
+  install-goose:
+    desc: "Устанавливает goose в каталог bin"
+    cmds:
+      - |
+        [ -f {{.GOOSE}} ] || {
+          echo "📦 Устанавливаем goose {{.GOOSE_VERSION}}..."
+          GOBIN={{.BIN_DIR}} go install github.com/pressly/goose/v3/cmd/goose@{{.GOOSE_VERSION}}
+        }
+    status:
+      - test -x {{.GOOSE}}
+
+  db:migrate:inventory:
+    desc: "Запускает миграции inventory"
+    deps: [install-goose]
+    dotenv: ['deploy/compose/inventory/.env']
+    preconditions:
+      - sh: test -f deploy/compose/inventory/.env
+        msg: "Создай deploy/compose/inventory/.env из .env.example"
+    cmds:
+      - |
+        {{.GOOSE}} -dir inventory/migrations postgres \
+          "host=$POSTGRES_HOST port=$POSTGRES_PORT user=$POSTGRES_USER password=$POSTGRES_PASSWORD dbname=$POSTGRES_DB sslmode=$POSTGRES_SSL_MODE" \
+          up
+
+  db:status:inventory:
+    desc: "Показывает статус миграций inventory"
+    deps: [install-goose]
+    dotenv: ['deploy/compose/inventory/.env']
+    preconditions:
+      - sh: test -f deploy/compose/inventory/.env
+        msg: "Создай deploy/compose/inventory/.env из .env.example"
+    cmds:
+      - |
+        {{.GOOSE}} -dir inventory/migrations postgres \
+          "host=$POSTGRES_HOST port=$POSTGRES_PORT user=$POSTGRES_USER password=$POSTGRES_PASSWORD dbname=$POSTGRES_DB sslmode=$POSTGRES_SSL_MODE" \
+          status
+
+  db:rollback:inventory:
+    desc: "Откатывает последнюю миграцию inventory"
+    deps: [install-goose]
+    dotenv: ['deploy/compose/inventory/.env']
+    preconditions:
+      - sh: test -f deploy/compose/inventory/.env
+        msg: "Создай deploy/compose/inventory/.env из .env.example"
+    cmds:
+      - |
+        {{.GOOSE}} -dir inventory/migrations postgres \
+          "host=$POSTGRES_HOST port=$POSTGRES_PORT user=$POSTGRES_USER password=$POSTGRES_PASSWORD dbname=$POSTGRES_DB sslmode=$POSTGRES_SSL_MODE" \
+          down
