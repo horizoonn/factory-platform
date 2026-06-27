@@ -1,4 +1,4 @@
-package part
+package repository
 
 import (
 	"github.com/horizoonn/factory-platform.git/platform/pkg/database/postgres/pool"
