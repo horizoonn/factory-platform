@@ -4,6 +4,7 @@ go 1.26.2
 
 require (
 	github.com/google/uuid v1.6.0 // indirect
+	github.com/kelseyhightower/envconfig v1.4.0
 	golang.org/x/net v0.51.0 // indirect
 	golang.org/x/sys v0.42.0 // indirect
 	golang.org/x/text v0.34.0 // indirect
