@@ -16,6 +16,8 @@
 
 # env file
 .env
+/deploy/env/*.env
+!/deploy/env/*.env.example
 /.idea
 /.vscode
 /.cursor
