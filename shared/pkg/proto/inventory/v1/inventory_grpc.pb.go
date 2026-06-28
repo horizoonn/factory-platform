@@ -8,6 +8,7 @@ package inventoryv1
 
 import (
 	context "context"
+
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -78,6 +79,7 @@ type UnimplementedInventoryServiceServer struct{}
 func (UnimplementedInventoryServiceServer) GetPart(context.Context, *GetPartRequest) (*GetPartResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetPart not implemented")
 }
+
 func (UnimplementedInventoryServiceServer) ListParts(context.Context, *ListPartsRequest) (*ListPartsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListParts not implemented")
 }
