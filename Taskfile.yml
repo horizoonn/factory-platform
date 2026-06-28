@@ -184,6 +184,26 @@ tasks:
             (cd "$mod" && go mod tidy -compat=1.26) || exit 1
           fi
         done
+
+  run:inventory:
+    desc: "Запускает InventoryService локально"
+    dotenv: ['deploy/env/inventory.env']
+    preconditions:
+      - sh: test -f deploy/env/inventory.env
+        msg: "Создай deploy/env/inventory.env из inventory.env.example"
+    cmds:
+      - |
+        (cd inventory && go run ./cmd)
+
+  run:payment:
+    desc: "Запускает PaymentService локально"
+    dotenv: ['deploy/env/payment.env']
+    preconditions:
+      - sh: test -f deploy/env/payment.env
+        msg: "Создай deploy/env/payment.env из payment.env.example"
+    cmds:
+      - |
+        (cd payment && go run ./cmd)
   
   install-goose:
     desc: "Устанавливает goose в каталог bin"
@@ -199,10 +219,10 @@ tasks:
   db:migrate:inventory:
     desc: "Запускает миграции inventory"
     deps: [install-goose]
-    dotenv: ['deploy/compose/inventory/.env']
+    dotenv: ['deploy/env/inventory.env']
     preconditions:
-      - sh: test -f deploy/compose/inventory/.env
-        msg: "Создай deploy/compose/inventory/.env из .env.example"
+      - sh: test -f deploy/env/inventory.env
+        msg: "Создай deploy/env/inventory.env из inventory.env.example"
     cmds:
       - |
         {{.GOOSE}} -dir inventory/migrations postgres \
@@ -212,10 +232,10 @@ tasks:
   db:status:inventory:
     desc: "Показывает статус миграций inventory"
     deps: [install-goose]
-    dotenv: ['deploy/compose/inventory/.env']
+    dotenv: ['deploy/env/inventory.env']
     preconditions:
-      - sh: test -f deploy/compose/inventory/.env
-        msg: "Создай deploy/compose/inventory/.env из .env.example"
+      - sh: test -f deploy/env/inventory.env
+        msg: "Создай deploy/env/inventory.env из inventory.env.example"
     cmds:
       - |
         {{.GOOSE}} -dir inventory/migrations postgres \
@@ -225,10 +245,10 @@ tasks:
   db:rollback:inventory:
     desc: "Откатывает последнюю миграцию inventory"
     deps: [install-goose]
-    dotenv: ['deploy/compose/inventory/.env']
+    dotenv: ['deploy/env/inventory.env']
     preconditions:
-      - sh: test -f deploy/compose/inventory/.env
-        msg: "Создай deploy/compose/inventory/.env из .env.example"
+      - sh: test -f deploy/env/inventory.env
+        msg: "Создай deploy/env/inventory.env из inventory.env.example"
     cmds:
       - |
         {{.GOOSE}} -dir inventory/migrations postgres \
