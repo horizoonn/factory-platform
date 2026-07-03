@@ -1,0 +1,13 @@
+type: object
+required:
+  - code
+  - message
+properties:
+  code:
+    type: integer
+    description: HTTP status code
+    example: 404
+  message:
+    type: string
+    description: Error message
+    example: Order not found

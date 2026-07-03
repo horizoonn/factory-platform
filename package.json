@@ -1,0 +1,7 @@
+{
+  "name": "factory-platform",
+  "private": true,
+  "dependencies": {
+    "@redocly/cli": "^1.34.3"
+  }
+}
