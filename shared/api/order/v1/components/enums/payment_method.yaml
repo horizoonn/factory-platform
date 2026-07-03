@@ -1,0 +1,8 @@
+type: string
+description: Payment method
+enum:
+  - CARD
+  - SBP
+  - CREDIT_CARD
+  - INVESTOR_MONEY
+example: CARD

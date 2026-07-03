@@ -1,0 +1,9 @@
+type: object
+required:
+  - transaction_uuid
+properties:
+  transaction_uuid:
+    type: string
+    format: uuid
+    description: Payment transaction UUID
+    example: "55555555-5555-5555-5555-555555555555"
