@@ -10,6 +10,9 @@ vars:
   PROTOC_GEN_GO_VERSION: 'v1.36.11'
   PROTOC_GEN_GO_GRPC_VERSION: 'v1.6.1'
   GOOSE_VERSION: 'v3.27.1'
+  OGEN_VERSION: 'v1.22.0'
+  YQ_VERSION: 'v4.45.2'
+  GRPCURL_VERSION: 'v1.9.3'
 
   BIN_DIR: '{{.ROOT_DIR}}/bin'
   GOLANGCI_LINT: '{{.BIN_DIR}}/golangci-lint'
@@ -19,19 +22,22 @@ vars:
   PROTOC_GEN_GO: '{{.BIN_DIR}}/protoc-gen-go'
   PROTOC_GEN_GO_GRPC: '{{.BIN_DIR}}/protoc-gen-go-grpc'
   GOOSE: '{{.BIN_DIR}}/goose'
+  OGEN: '{{.BIN_DIR}}/ogen'
+  YQ: '{{.BIN_DIR}}/yq'
+  GRPCURL: '{{.BIN_DIR}}/grpcurl'
+
+  NODE_MODULES_DIR: '{{.ROOT_DIR}}/node_modules/.bin'
+  REDOCLY: '{{.NODE_MODULES_DIR}}/redocly'
+
+  OPEN_API_ORDER_V1_BASE: '{{.ROOT_DIR}}/shared/api/order/v1/order.openapi.yaml'
+  OPEN_API_ORDER_V1_BUNDLE: '{{.ROOT_DIR}}/shared/api/bundles/order.openapi.v1.bundle.yaml'
+  OPEN_API_FILES: '{{.ROOT_DIR}}/shared/api/bundles'
 
   MODULES: assembly inventory order payment platform iam notification shared
 
 tasks:
   install-formatters:
-    desc: "Устанавливает форматтеры gci и gofumpt в ./bin"
-    summary: |
-      Эта задача проверяет наличие инструментов форматирования кода gofumpt и gci в директории bin.
-      Если инструменты не найдены, они будут автоматически установлены с указанными версиями.
-      
-      Используется:
-        - gofumpt: для форматирования кода Go
-        - gci: для сортировки импортов Go
+    desc: "Установка форматтеров gci и gofumpt в ./bin"
     cmds:
       - |
         [ -f {{.GOFUMPT}} ] || {
@@ -47,14 +53,7 @@ tasks:
       - test -x {{.GCI}}
 
   format:
-    desc: "Форматирует весь проект gofumpt + gci, исключая mocks"
-    summary: |
-      Форматирует все Go-файлы проекта с использованием gofumpt для стандартизации кода
-      и gci для сортировки импортов, исключая файлы в директориях mocks.
-      
-      Использует инструменты:
-        - gofumpt: для стандартизации форматирования
-        - gci: для сортировки импортов по стандартным группам
+    desc: "Форматирование всего проекта gofumpt + gci, исключая mocks"
     deps: [ install-formatters ]
     cmds:
       - |
@@ -77,12 +76,7 @@ tasks:
         done
 
   install-golangci-lint:
-    desc: "Устанавливает golangci-lint в каталог bin"
-    summary: |
-      Проверяет наличие golangci-lint в директории bin.
-      Если инструмент не найден, автоматически устанавливает его через go install.
-      
-      Устанавливаемая версия: {{.GOLANGCI_LINT_VERSION}}
+    desc: "Установка golangci-lint в каталог bin"
     cmds:
       - |
         [ -f {{.GOLANGCI_LINT}} ] || {
@@ -94,15 +88,7 @@ tasks:
       - test -x {{.GOLANGCI_LINT}}
 
   lint:
-    desc: "Запускает golangci-lint для всех модулей"
-    summary: |
-      Запускает линтер golangci-lint для всех модулей проекта.
-      Линтер проверяет код на соответствие стандартам качества и лучшим практикам.
-      Проверка включает проверку безопасности через gosec (встроенный в golangci-lint).
-      
-      Зависимости:
-        - install-golangci-lint: автоматически устанавливает линтер
-        - format: форматирует код перед проверкой
+    desc: "Запуск golangci-lint для всех модулей"
     deps: [ install-golangci-lint ]
     vars:
       MODULES: '{{.MODULES}}'
@@ -128,7 +114,7 @@ tasks:
         exit $ERR
   
   install-buf:
-    desc: "Устанавливает Buf в каталог bin"
+    desc: "Установка Buf в каталог bin"
     cmds:
       - |
         [ -f {{.BUF}} ] || {
@@ -142,7 +128,7 @@ tasks:
         }
 
   proto:install-plugins:
-    desc: "Устанавливает protoc плагины в каталог bin"
+    desc: "Установка protoc плагинов в каталог bin"
     cmds:
       - |
         [ -f {{.PROTOC_GEN_GO}} ] || {
@@ -168,10 +154,78 @@ tasks:
     cmds:
       - '{{.BUF}} lint'
 
+  redocly-cli:install:
+    desc: Установка Redocly CLI локально через npm
+    cmds:
+      - |
+        [ -f {{.REDOCLY}} ] || {
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+        }
+
+  redocly-cli:order-v1-bundle:
+    desc: Сборка OpenAPI контракта OrderService в один файл
+    deps: [ redocly-cli:install ]
+    cmds:
+      - '{{.REDOCLY}} bundle {{.OPEN_API_ORDER_V1_BASE}} -o {{.OPEN_API_ORDER_V1_BUNDLE}}'
+
+  redocly-cli:bundle:
+    desc: Сборка всех OpenAPI контрактов в bundle-файлы
+    deps: [ redocly-cli:install ]
+    cmds:
+      - task: redocly-cli:order-v1-bundle
+
+  ogen:install:
+    desc: "Установка ogen в каталог bin"
+    cmds:
+      - |
+        [ -f {{.OGEN}} ] || {
+          mkdir -p {{.BIN_DIR}}
+          GOBIN={{.BIN_DIR}} go install github.com/ogen-go/ogen/cmd/ogen@{{.OGEN_VERSION}}
+        }
+    status:
+      - test -x {{.OGEN}}
+
+  yq:install:
+    desc: "Установка yq в каталог bin"
+    cmds:
+      - |
+        [ -f {{.YQ}} ] || {
+          mkdir -p {{.BIN_DIR}}
+          GOBIN={{.BIN_DIR}} go install github.com/mikefarah/yq/v4@{{.YQ_VERSION}}
+        }
+    status:
+      - test -x {{.YQ}}
+
+  ogen:gen:
+    desc: "Генерация Go-кода из OpenAPI контрактов с x-ogen"
+    deps: [ ogen:install, yq:install ]
+    cmds:
+      - task: redocly-cli:bundle
+      - |
+        find {{.OPEN_API_FILES}} -name '*.yaml' -o -name '*.yml' | while read -r file; do
+          if [ -f "$file" ] && grep -q 'x-ogen:' "$file"; then
+            echo "🚀 Generating from: $file"
+            target=$({{.YQ}} e '."x-ogen".target' "$file")
+            package=$({{.YQ}} e '."x-ogen".package' "$file")
+            echo "📁 Target: $target"
+            echo "📦 Package: $package"
+            {{.OGEN}} \
+              --target "$target" \
+              --package "$package" \
+              --clean \
+              "$file" || exit 1
+          fi
+        done
+
   gen:
-    desc: "Генерация всех proto-деклараций"
+    desc: "Генерация всех proto и OpenAPI деклараций"
     cmds:
       - task: proto:gen
+      - task: ogen:gen
 
   deps:update:
     desc: "Обновление зависимостей в go.mod во всех модулях"
@@ -186,7 +240,7 @@ tasks:
         done
 
   run:inventory:
-    desc: "Запускает InventoryService локально"
+    desc: "Запуск InventoryService локально"
     dotenv: ['deploy/env/inventory.env']
     preconditions:
       - sh: test -f deploy/env/inventory.env
@@ -196,7 +250,7 @@ tasks:
         (cd inventory && go run ./cmd)
 
   run:payment:
-    desc: "Запускает PaymentService локально"
+    desc: "Запуск PaymentService локально"
     dotenv: ['deploy/env/payment.env']
     preconditions:
       - sh: test -f deploy/env/payment.env
@@ -206,7 +260,7 @@ tasks:
         (cd payment && go run ./cmd)
   
   install-goose:
-    desc: "Устанавливает goose в каталог bin"
+    desc: "Установка goose в каталог bin"
     cmds:
       - |
         [ -f {{.GOOSE}} ] || {
@@ -217,7 +271,7 @@ tasks:
       - test -x {{.GOOSE}}
 
   db:migrate:inventory:
-    desc: "Запускает миграции inventory"
+    desc: "Запуск миграций inventory"
     deps: [install-goose]
     dotenv: ['deploy/env/inventory.env']
     preconditions:
@@ -230,7 +284,7 @@ tasks:
           up
 
   db:status:inventory:
-    desc: "Показывает статус миграций inventory"
+    desc: "Статус миграций inventory"
     deps: [install-goose]
     dotenv: ['deploy/env/inventory.env']
     preconditions:
@@ -243,7 +297,7 @@ tasks:
           status
 
   db:rollback:inventory:
-    desc: "Откатывает последнюю миграцию inventory"
+    desc: "Откат последней миграции inventory"
     deps: [install-goose]
     dotenv: ['deploy/env/inventory.env']
     preconditions:
@@ -254,3 +308,113 @@ tasks:
         {{.GOOSE}} -dir inventory/migrations postgres \
           "host=$POSTGRES_HOST port=$POSTGRES_PORT user=$POSTGRES_USER password=$POSTGRES_PASSWORD dbname=$POSTGRES_DB sslmode=$POSTGRES_SSL_MODE" \
           down
+
+  grpcurl:install:
+    desc: "Установка grpcurl в каталог bin"
+    cmds:
+      - |
+        [ -f {{.GRPCURL}} ] || {
+          echo '📦 Устанавливаем grpcurl {{.GRPCURL_VERSION}}...'
+          GOBIN={{.BIN_DIR}} go install github.com/fullstorydev/grpcurl/cmd/grpcurl@{{.GRPCURL_VERSION}}
+        }
+    status:
+      - test -x {{.GRPCURL}}
+
+  test-api:
+    desc: "Ручная проверка Inventory, Payment и Order API"
+    deps: [ grpcurl:install ]
+    cmds:
+      - |
+        set -e
+
+        echo "🧪 Проверяем InventoryService через gRPC"
+        PARTS_RESPONSE=$({{.GRPCURL}} -plaintext -d '{"filter":{}}' localhost:50051 inventory.v1.InventoryService/ListParts)
+        PART_UUID=$(echo "$PARTS_RESPONSE" | grep -o '"uuid": "[^"]*' | head -1 | cut -d'"' -f4)
+
+        if [ -z "$PART_UUID" ]; then
+          echo "❌ Не удалось получить UUID детали из InventoryService"
+          echo "$PARTS_RESPONSE"
+          exit 1
+        fi
+
+        echo "✅ Найдена деталь: $PART_UUID"
+
+        USER_UUID=$(uuidgen | tr '[:upper:]' '[:lower:]')
+
+        echo "🧪 Создаем заказ через OrderService"
+        ORDER_RESPONSE=$(curl -s -X POST "http://localhost:8080/api/v1/orders" \
+          -H "Content-Type: application/json" \
+          -d "{\"user_uuid\":\"$USER_UUID\",\"part_uuids\":[\"$PART_UUID\"]}")
+        ORDER_UUID=$(echo "$ORDER_RESPONSE" | grep -o '"order_uuid":"[^"]*' | cut -d'"' -f4)
+
+        if [ -z "$ORDER_UUID" ]; then
+          ORDER_UUID=$(echo "$ORDER_RESPONSE" | grep -o '"order_uuid": "[^"]*' | cut -d'"' -f4)
+        fi
+
+        if [ -z "$ORDER_UUID" ]; then
+          echo "❌ Не удалось создать заказ или извлечь order_uuid"
+          echo "$ORDER_RESPONSE"
+          exit 1
+        fi
+
+        echo "✅ Создан заказ: $ORDER_UUID"
+
+        echo "🧪 Получаем заказ"
+        ORDER_INFO_RESPONSE=$(curl -s -X GET "http://localhost:8080/api/v1/orders/$ORDER_UUID")
+        ORDER_STATUS=$(echo "$ORDER_INFO_RESPONSE" | grep -o '"status":"[^"]*' | cut -d'"' -f4)
+
+        if [ -z "$ORDER_STATUS" ]; then
+          ORDER_STATUS=$(echo "$ORDER_INFO_RESPONSE" | grep -o '"status": "[^"]*' | cut -d'"' -f4)
+        fi
+
+        if [ "$ORDER_STATUS" != "PENDING_PAYMENT" ]; then
+          echo "❌ Ожидался статус PENDING_PAYMENT, получен: $ORDER_STATUS"
+          echo "$ORDER_INFO_RESPONSE"
+          exit 1
+        fi
+
+        echo "✅ Начальный статус корректный: $ORDER_STATUS"
+
+        echo "🧪 Оплачиваем заказ"
+        PAY_RESPONSE=$(curl -s -X POST "http://localhost:8080/api/v1/orders/$ORDER_UUID/pay" \
+          -H "Content-Type: application/json" \
+          -d '{"payment_method":"CARD"}')
+        TRANSACTION_UUID=$(echo "$PAY_RESPONSE" | grep -o '"transaction_uuid":"[^"]*' | cut -d'"' -f4)
+
+        if [ -z "$TRANSACTION_UUID" ]; then
+          TRANSACTION_UUID=$(echo "$PAY_RESPONSE" | grep -o '"transaction_uuid": "[^"]*' | cut -d'"' -f4)
+        fi
+
+        if [ -z "$TRANSACTION_UUID" ]; then
+          echo "❌ Не удалось оплатить заказ или извлечь transaction_uuid"
+          echo "$PAY_RESPONSE"
+          exit 1
+        fi
+
+        echo "✅ Заказ оплачен, transaction_uuid: $TRANSACTION_UUID"
+
+        echo "🧪 Создаем второй заказ для отмены"
+        ORDER2_RESPONSE=$(curl -s -X POST "http://localhost:8080/api/v1/orders" \
+          -H "Content-Type: application/json" \
+          -d "{\"user_uuid\":\"$USER_UUID\",\"part_uuids\":[\"$PART_UUID\"]}")
+        ORDER2_UUID=$(echo "$ORDER2_RESPONSE" | grep -o '"order_uuid":"[^"]*' | cut -d'"' -f4)
+
+        if [ -z "$ORDER2_UUID" ]; then
+          ORDER2_UUID=$(echo "$ORDER2_RESPONSE" | grep -o '"order_uuid": "[^"]*' | cut -d'"' -f4)
+        fi
+
+        if [ -z "$ORDER2_UUID" ]; then
+          echo "❌ Не удалось создать второй заказ"
+          echo "$ORDER2_RESPONSE"
+          exit 1
+        fi
+
+        CANCEL_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X POST "http://localhost:8080/api/v1/orders/$ORDER2_UUID/cancel")
+
+        if [ "$CANCEL_STATUS" != "204" ]; then
+          echo "❌ Ожидался HTTP 204 при отмене, получен: $CANCEL_STATUS"
+          exit 1
+        fi
+
+        echo "✅ Второй заказ отменен"
+        echo "🎉 Базовая API-проверка завершена"
