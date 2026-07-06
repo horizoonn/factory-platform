@@ -19,7 +19,7 @@ import (
 
 	paymentapi "github.com/horizoonn/factory-platform/payment/internal/api/payment/v1"
 	"github.com/horizoonn/factory-platform/payment/internal/config"
-	"github.com/horizoonn/factory-platform/payment/internal/service"
+	paymentservice "github.com/horizoonn/factory-platform/payment/internal/service/payment"
 	paymentv1 "github.com/horizoonn/factory-platform/shared/pkg/proto/payment/v1"
 )
 
@@ -36,8 +36,8 @@ func run() error {
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer cancel()
 
-	paymentService := service.NewPaymentService()
-	paymentServer := paymentapi.NewPaymentServer(paymentService)
+	paymentService := paymentservice.NewService()
+	paymentServer := paymentapi.NewServer(paymentService)
 
 	listener, err := net.Listen("tcp", cfg.PaymentGRPC().Address())
 	if err != nil {

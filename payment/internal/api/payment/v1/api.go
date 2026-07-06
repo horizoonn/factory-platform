@@ -3,22 +3,22 @@ package paymentv1
 import (
 	"context"
 
-	paymentservice "github.com/horizoonn/factory-platform/payment/internal/service"
+	servicedto "github.com/horizoonn/factory-platform/payment/internal/service/dto"
 	paymentpb "github.com/horizoonn/factory-platform/shared/pkg/proto/payment/v1"
 )
 
-type PaymentServer struct {
+type Server struct {
 	paymentpb.UnimplementedPaymentServiceServer
 
-	paymentService PaymentService
+	service PaymentService
 }
 
 type PaymentService interface {
-	PayOrder(ctx context.Context, req paymentservice.PayOrderRequest) (paymentservice.PayOrderResponse, error)
+	PayOrder(ctx context.Context, req servicedto.PayOrderRequest) (servicedto.PayOrderResponse, error)
 }
 
-func NewPaymentServer(paymentService PaymentService) *PaymentServer {
-	return &PaymentServer{
-		paymentService: paymentService,
+func NewServer(service PaymentService) *Server {
+	return &Server{
+		service: service,
 	}
 }
