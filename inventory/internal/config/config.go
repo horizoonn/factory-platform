@@ -3,7 +3,7 @@ package config
 import (
 	"fmt"
 
-	"github.com/horizoonn/factory-platform.git/inventory/internal/config/env"
+	"github.com/horizoonn/factory-platform/inventory/internal/config/env"
 )
 
 type EnvConfig struct {

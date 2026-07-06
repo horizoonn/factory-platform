@@ -7,8 +7,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/horizoonn/factory-platform.git/inventory/internal/domain"
-	postgrespool "github.com/horizoonn/factory-platform.git/platform/pkg/database/postgres/pool"
+	"github.com/horizoonn/factory-platform/inventory/internal/domain"
+	postgrespool "github.com/horizoonn/factory-platform/platform/pkg/database/postgres/pool"
 )
 
 func (r *Repository) GetPart(ctx context.Context, id uuid.UUID) (domain.Part, error) {

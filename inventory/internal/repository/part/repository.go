@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"github.com/horizoonn/factory-platform.git/platform/pkg/database/postgres/pool"
+	"github.com/horizoonn/factory-platform/platform/pkg/database/postgres/pool"
 )
 
 type Repository struct {

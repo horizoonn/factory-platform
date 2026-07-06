@@ -5,8 +5,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/horizoonn/factory-platform.git/inventory/internal/domain"
-	inventorypb "github.com/horizoonn/factory-platform.git/shared/pkg/proto/inventory/v1"
+	"github.com/horizoonn/factory-platform/inventory/internal/domain"
+	inventorypb "github.com/horizoonn/factory-platform/shared/pkg/proto/inventory/v1"
 )
 
 type InventoryServer struct {

@@ -8,8 +8,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/horizoonn/factory-platform.git/inventory/internal/domain"
-	inventorypb "github.com/horizoonn/factory-platform.git/shared/pkg/proto/inventory/v1"
+	"github.com/horizoonn/factory-platform/inventory/internal/domain"
+	inventorypb "github.com/horizoonn/factory-platform/shared/pkg/proto/inventory/v1"
 )
 
 func (s *InventoryServer) GetPart(ctx context.Context, req *inventorypb.GetPartRequest) (*inventorypb.GetPartResponse, error) {

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/horizoonn/factory-platform.git/inventory/internal/domain"
+	"github.com/horizoonn/factory-platform/inventory/internal/domain"
 )
 
 func (s *InventoryService) ListParts(ctx context.Context, filter domain.PartsFilter) ([]domain.Part, error) {

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/horizoonn/factory-platform.git/inventory/internal/domain"
+	"github.com/horizoonn/factory-platform/inventory/internal/domain"
 )
 
 func (r *Repository) ListParts(ctx context.Context, filter domain.PartsFilter) ([]domain.Part, error) {

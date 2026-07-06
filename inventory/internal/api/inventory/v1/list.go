@@ -6,7 +6,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	inventorypb "github.com/horizoonn/factory-platform.git/shared/pkg/proto/inventory/v1"
+	inventorypb "github.com/horizoonn/factory-platform/shared/pkg/proto/inventory/v1"
 )
 
 func (s *InventoryServer) ListParts(ctx context.Context, req *inventorypb.ListPartsRequest) (*inventorypb.ListPartsResponse, error) {
