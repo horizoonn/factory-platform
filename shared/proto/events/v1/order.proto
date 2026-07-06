@@ -4,8 +4,9 @@ package events.v1;
 
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/horizoonn/factory-platform.git/shared/pkg/proto/events/v1;eventsv1";
+option go_package = "github.com/horizoonn/factory-platform/shared/pkg/proto/events/v1;eventsv1";
 
+// OrderPaid — событие успешной оплаты заказа.
 message OrderPaid {
     string event_uuid = 1;
     string order_uuid = 2;
@@ -15,6 +16,7 @@ message OrderPaid {
     google.protobuf.Timestamp occurred_at = 6;
 }
 
+// ShipAssembled — событие завершения сборки корабля.
 message ShipAssembled {
     string event_uuid = 1;
     string order_uuid = 2;

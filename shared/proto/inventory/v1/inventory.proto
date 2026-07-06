@@ -2,9 +2,10 @@ syntax = "proto3";
 
 package inventory.v1;
 
+import "buf/validate/validate.proto";
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/horizoonn/factory-platform.git/shared/pkg/proto/inventory/v1;inventoryv1";
+option go_package = "github.com/horizoonn/factory-platform/shared/pkg/proto/inventory/v1;inventoryv1";
 
 service InventoryService {
     rpc GetPart(GetPartRequest) returns (GetPartResponse);
@@ -12,6 +13,7 @@ service InventoryService {
     rpc ListParts(ListPartsRequest) returns (ListPartsResponse);
 }
 
+// Part — деталь на складе.
 message Part {
     string uuid = 1;
     string name = 2;
@@ -27,6 +29,7 @@ message Part {
     google.protobuf.Timestamp updated_at = 12;
 }
 
+// Category — категория детали.
 enum Category {
     CATEGORY_UNSPECIFIED = 0;
     CATEGORY_ENGINE = 1;
@@ -35,6 +38,7 @@ enum Category {
     CATEGORY_WING = 4;
 }
 
+// Dimensions — габариты и вес детали.
 message Dimensions {
     double length = 1;
     double width = 2;
@@ -42,12 +46,14 @@ message Dimensions {
     double weight = 4;
 }
 
+// Manufacturer — производитель детали.
 message Manufacturer {
     string name = 1;
     string country = 2;
     string website = 3;
 }
 
+// Value — типизированное значение метаданных.
 message Value {
     oneof kind {
       string string_value = 1;
@@ -57,26 +63,44 @@ message Value {
     }
 }
 
+// PartsFilter — фильтр для списка деталей.
 message PartsFilter {
-    repeated string uuids = 1;
-    repeated string names = 2;
-    repeated Category categories = 3;
-    repeated string manufacturer_countries = 4;
-    repeated string tags = 5;
+    repeated string uuids = 1 [(buf.validate.field).repeated.items = {
+      string: { uuid: true }
+    }];
+    repeated string names = 2 [(buf.validate.field).repeated.items = {
+      string: { min_len: 1 }
+    }];
+    repeated Category categories = 3 [(buf.validate.field).repeated.items = {
+      enum: {
+        defined_only: true
+        not_in: 0
+      }
+    }];
+    repeated string manufacturer_countries = 4 [(buf.validate.field).repeated.items = {
+      string: { min_len: 1 }
+    }];
+    repeated string tags = 5 [(buf.validate.field).repeated.items = {
+      string: { min_len: 1 }
+    }];
 }
 
+// GetPartRequest — запрос получения детали по UUID.
 message GetPartRequest {
-    string uuid = 1;
+    string uuid = 1 [(buf.validate.field).string.uuid = true];
 }
 
+// GetPartResponse — ответ с запрошенной деталью.
 message GetPartResponse {
     Part part = 1;
 }
 
+// ListPartsRequest — запрос списка деталей с фильтром.
 message ListPartsRequest {
     PartsFilter filter = 1;
 }
 
+// ListPartsResponse — ответ со списком деталей.
 message ListPartsResponse {
     repeated Part parts = 1;
 }

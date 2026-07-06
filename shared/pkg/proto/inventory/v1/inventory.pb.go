@@ -11,6 +11,7 @@ import (
 	sync "sync"
 	unsafe "unsafe"
 
+	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
@@ -23,6 +24,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// Category — категория детали.
 type Category int32
 
 const (
@@ -78,6 +80,7 @@ func (Category) EnumDescriptor() ([]byte, []int) {
 	return file_inventory_v1_inventory_proto_rawDescGZIP(), []int{0}
 }
 
+// Part — деталь на складе.
 type Part struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Uuid          string                 `protobuf:"bytes,1,opt,name=uuid,proto3" json:"uuid,omitempty"`
@@ -210,6 +213,7 @@ func (x *Part) GetUpdatedAt() *timestamppb.Timestamp {
 	return nil
 }
 
+// Dimensions — габариты и вес детали.
 type Dimensions struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Length        float64                `protobuf:"fixed64,1,opt,name=length,proto3" json:"length,omitempty"`
@@ -278,6 +282,7 @@ func (x *Dimensions) GetWeight() float64 {
 	return 0
 }
 
+// Manufacturer — производитель детали.
 type Manufacturer struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
@@ -338,6 +343,7 @@ func (x *Manufacturer) GetWebsite() string {
 	return ""
 }
 
+// Value — типизированное значение метаданных.
 type Value struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Types that are valid to be assigned to Kind:
@@ -452,6 +458,7 @@ func (*Value_DoubleValue) isValue_Kind() {}
 
 func (*Value_BoolValue) isValue_Kind() {}
 
+// PartsFilter — фильтр для списка деталей.
 type PartsFilter struct {
 	state                 protoimpl.MessageState `protogen:"open.v1"`
 	Uuids                 []string               `protobuf:"bytes,1,rep,name=uuids,proto3" json:"uuids,omitempty"`
@@ -528,6 +535,7 @@ func (x *PartsFilter) GetTags() []string {
 	return nil
 }
 
+// GetPartRequest — запрос получения детали по UUID.
 type GetPartRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Uuid          string                 `protobuf:"bytes,1,opt,name=uuid,proto3" json:"uuid,omitempty"`
@@ -572,6 +580,7 @@ func (x *GetPartRequest) GetUuid() string {
 	return ""
 }
 
+// GetPartResponse — ответ с запрошенной деталью.
 type GetPartResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Part          *Part                  `protobuf:"bytes,1,opt,name=part,proto3" json:"part,omitempty"`
@@ -616,6 +625,7 @@ func (x *GetPartResponse) GetPart() *Part {
 	return nil
 }
 
+// ListPartsRequest — запрос списка деталей с фильтром.
 type ListPartsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Filter        *PartsFilter           `protobuf:"bytes,1,opt,name=filter,proto3" json:"filter,omitempty"`
@@ -660,6 +670,7 @@ func (x *ListPartsRequest) GetFilter() *PartsFilter {
 	return nil
 }
 
+// ListPartsResponse — ответ со списком деталей.
 type ListPartsResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Parts         []*Part                `protobuf:"bytes,1,rep,name=parts,proto3" json:"parts,omitempty"`
@@ -708,7 +719,7 @@ var File_inventory_v1_inventory_proto protoreflect.FileDescriptor
 
 const file_inventory_v1_inventory_proto_rawDesc = "" +
 	"\n" +
-	"\x1cinventory/v1/inventory.proto\x12\finventory.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xd5\x04\n" +
+	"\x1cinventory/v1/inventory.proto\x12\finventory.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xd5\x04\n" +
 	"\x04Part\x12\x12\n" +
 	"\x04uuid\x18\x01 \x01(\tR\x04uuid\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
@@ -747,17 +758,18 @@ const file_inventory_v1_inventory_proto_rawDesc = "" +
 	"\fdouble_value\x18\x03 \x01(\x01H\x00R\vdoubleValue\x12\x1f\n" +
 	"\n" +
 	"bool_value\x18\x04 \x01(\bH\x00R\tboolValueB\x06\n" +
-	"\x04kind\"\xbc\x01\n" +
-	"\vPartsFilter\x12\x14\n" +
-	"\x05uuids\x18\x01 \x03(\tR\x05uuids\x12\x14\n" +
-	"\x05names\x18\x02 \x03(\tR\x05names\x126\n" +
+	"\x04kind\"\x86\x02\n" +
+	"\vPartsFilter\x12#\n" +
+	"\x05uuids\x18\x01 \x03(\tB\r\xbaH\n" +
+	"\x92\x01\a\"\x05r\x03\xb0\x01\x01R\x05uuids\x12\"\n" +
+	"\x05names\x18\x02 \x03(\tB\f\xbaH\t\x92\x01\x06\"\x04r\x02\x10\x01R\x05names\x12G\n" +
 	"\n" +
-	"categories\x18\x03 \x03(\x0e2\x16.inventory.v1.CategoryR\n" +
-	"categories\x125\n" +
-	"\x16manufacturer_countries\x18\x04 \x03(\tR\x15manufacturerCountries\x12\x12\n" +
-	"\x04tags\x18\x05 \x03(\tR\x04tags\"$\n" +
-	"\x0eGetPartRequest\x12\x12\n" +
-	"\x04uuid\x18\x01 \x01(\tR\x04uuid\"9\n" +
+	"categories\x18\x03 \x03(\x0e2\x16.inventory.v1.CategoryB\x0f\xbaH\f\x92\x01\t\"\a\x82\x01\x04\x10\x01 \x00R\n" +
+	"categories\x12C\n" +
+	"\x16manufacturer_countries\x18\x04 \x03(\tB\f\xbaH\t\x92\x01\x06\"\x04r\x02\x10\x01R\x15manufacturerCountries\x12 \n" +
+	"\x04tags\x18\x05 \x03(\tB\f\xbaH\t\x92\x01\x06\"\x04r\x02\x10\x01R\x04tags\".\n" +
+	"\x0eGetPartRequest\x12\x1c\n" +
+	"\x04uuid\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\x04uuid\"9\n" +
 	"\x0fGetPartResponse\x12&\n" +
 	"\x04part\x18\x01 \x01(\v2\x12.inventory.v1.PartR\x04part\"E\n" +
 	"\x10ListPartsRequest\x121\n" +
@@ -772,7 +784,7 @@ const file_inventory_v1_inventory_proto_rawDesc = "" +
 	"\rCATEGORY_WING\x10\x042\xa8\x01\n" +
 	"\x10InventoryService\x12F\n" +
 	"\aGetPart\x12\x1c.inventory.v1.GetPartRequest\x1a\x1d.inventory.v1.GetPartResponse\x12L\n" +
-	"\tListParts\x12\x1e.inventory.v1.ListPartsRequest\x1a\x1f.inventory.v1.ListPartsResponseBUZSgithub.com/horizoonn/factory-platform.git/shared/pkg/proto/inventory/v1;inventoryv1b\x06proto3"
+	"\tListParts\x12\x1e.inventory.v1.ListPartsRequest\x1a\x1f.inventory.v1.ListPartsResponseBQZOgithub.com/horizoonn/factory-platform/shared/pkg/proto/inventory/v1;inventoryv1b\x06proto3"
 
 var (
 	file_inventory_v1_inventory_proto_rawDescOnce sync.Once
