@@ -1,7 +1,7 @@
 services:
-  postgres-inventory:
+  postgres-order:
     image: postgres:18.1-bookworm
-    container_name: postgres-inventory
+    container_name: postgres-order
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
@@ -9,7 +9,7 @@ services:
     ports:
       - ${POSTGRES_BIND_HOST}:${POSTGRES_EXTERNAL_PORT}:5432
     volumes:
-      - postgres_inventory_data:/var/lib/postgresql
+      - postgres_order_data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
@@ -21,7 +21,7 @@ services:
       - microservices-net
 
 volumes:
-  postgres_inventory_data:
+  postgres_order_data:
 
 networks:
   microservices-net:
