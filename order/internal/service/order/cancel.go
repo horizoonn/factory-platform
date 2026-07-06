@@ -1,4 +1,4 @@
-package service
+package order
 
 import (
 	"context"
@@ -9,20 +9,16 @@ import (
 	"github.com/horizoonn/factory-platform/order/internal/domain"
 )
 
-func (s *OrderService) CancelOrder(ctx context.Context, id uuid.UUID) error {
-	if err := ctx.Err(); err != nil {
-		return fmt.Errorf("cancel order context: %w", err)
+func (s *Service) CancelOrder(ctx context.Context, id uuid.UUID) error {
+	if err := s.validateContext(ctx); err != nil {
+		return fmt.Errorf("cancel order: %w", err)
 	}
 
 	if id == uuid.Nil {
 		return domain.ErrOrderIDRequired
 	}
 
-	if s.orderRepository == nil {
-		return domain.ErrNotImplemented
-	}
-
-	order, err := s.orderRepository.GetOrder(ctx, id)
+	order, err := s.repository.GetOrder(ctx, id)
 	if err != nil {
 		return fmt.Errorf("get order with id='%s' from repository: %w", id, err)
 	}
@@ -39,7 +35,7 @@ func (s *OrderService) CancelOrder(ctx context.Context, id uuid.UUID) error {
 
 	order.Status = domain.OrderStatusCancelled
 
-	if _, err := s.orderRepository.UpdateOrder(ctx, order); err != nil {
+	if _, err := s.repository.UpdateOrder(ctx, order); err != nil {
 		return fmt.Errorf("update canceled order: %w", err)
 	}
 

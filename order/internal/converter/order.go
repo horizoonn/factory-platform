@@ -1,4 +1,4 @@
-package orderv1
+package converter
 
 import (
 	"fmt"
@@ -7,8 +7,8 @@ import (
 	orderopenapi "github.com/horizoonn/factory-platform/shared/pkg/openapi/order/v1"
 )
 
-func orderToOpenAPI(order domain.Order) (*orderopenapi.OrderDto, error) {
-	status, err := orderStatusToOpenAPI(order.Status)
+func OrderToOpenAPI(order domain.Order) (*orderopenapi.OrderDto, error) {
+	status, err := OrderStatusToOpenAPI(order.Status)
 	if err != nil {
 		return nil, err
 	}
@@ -26,7 +26,7 @@ func orderToOpenAPI(order domain.Order) (*orderopenapi.OrderDto, error) {
 	}
 
 	if order.PaymentMethod != nil {
-		pm, err := paymentMethodToOpenAPI(*order.PaymentMethod)
+		pm, err := PaymentMethodToOpenAPI(*order.PaymentMethod)
 		if err != nil {
 			return nil, err
 		}
@@ -36,7 +36,7 @@ func orderToOpenAPI(order domain.Order) (*orderopenapi.OrderDto, error) {
 	return dto, nil
 }
 
-func orderStatusToOpenAPI(status domain.OrderStatus) (orderopenapi.OrderStatus, error) {
+func OrderStatusToOpenAPI(status domain.OrderStatus) (orderopenapi.OrderStatus, error) {
 	switch status {
 	case domain.OrderStatusPendingPayment:
 		return orderopenapi.OrderStatusPENDINGPAYMENT, nil
@@ -49,7 +49,7 @@ func orderStatusToOpenAPI(status domain.OrderStatus) (orderopenapi.OrderStatus, 
 	}
 }
 
-func paymentMethodToDomain(method orderopenapi.PaymentMethod) (domain.PaymentMethod, error) {
+func PaymentMethodToDomain(method orderopenapi.PaymentMethod) (domain.PaymentMethod, error) {
 	switch method {
 	case orderopenapi.PaymentMethodCARD:
 		return domain.PaymentMethodCard, nil
@@ -64,7 +64,7 @@ func paymentMethodToDomain(method orderopenapi.PaymentMethod) (domain.PaymentMet
 	}
 }
 
-func paymentMethodToOpenAPI(method domain.PaymentMethod) (orderopenapi.PaymentMethod, error) {
+func PaymentMethodToOpenAPI(method domain.PaymentMethod) (orderopenapi.PaymentMethod, error) {
 	switch method {
 	case domain.PaymentMethodCard:
 		return orderopenapi.PaymentMethodCARD, nil

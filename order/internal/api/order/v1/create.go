@@ -5,16 +5,16 @@ import (
 	"errors"
 
 	"github.com/horizoonn/factory-platform/order/internal/domain"
-	orderservice "github.com/horizoonn/factory-platform/order/internal/service"
+	servicedto "github.com/horizoonn/factory-platform/order/internal/service/dto"
 	orderopenapi "github.com/horizoonn/factory-platform/shared/pkg/openapi/order/v1"
 )
 
-func (h *OrderHandler) CreateOrder(ctx context.Context, req *orderopenapi.CreateOrderRequest) (orderopenapi.CreateOrderRes, error) {
-	if h.orderService == nil {
+func (h *Handler) CreateOrder(ctx context.Context, req *orderopenapi.CreateOrderRequest) (orderopenapi.CreateOrderRes, error) {
+	if h.service == nil {
 		return nil, domain.ErrNotImplemented
 	}
 
-	order, err := h.orderService.CreateOrder(ctx, orderservice.CreateOrderRequest{
+	order, err := h.service.CreateOrder(ctx, servicedto.CreateOrderRequest{
 		UserID:  req.UserUUID,
 		PartIDs: req.PartUuids,
 	})

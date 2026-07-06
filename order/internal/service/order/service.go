@@ -1,4 +1,4 @@
-package service
+package order
 
 import (
 	"context"
@@ -9,23 +9,23 @@ import (
 	"github.com/horizoonn/factory-platform/order/internal/domain"
 )
 
-type OrderService struct {
-	orderRepository OrderRepository
+type Service struct {
+	repository      Repository
 	inventoryClient InventoryClient
 	paymentClient   PaymentClient
 	idGenerator     IDGenerator
 }
 
-func NewOrderService(repo OrderRepository, inventoryClient InventoryClient, paymentClient PaymentClient) *OrderService {
-	return &OrderService{
-		orderRepository: repo,
+func NewService(repo Repository, inventoryClient InventoryClient, paymentClient PaymentClient) *Service {
+	return &Service{
+		repository:      repo,
 		inventoryClient: inventoryClient,
 		paymentClient:   paymentClient,
 		idGenerator:     uuid.New,
 	}
 }
 
-type OrderRepository interface {
+type Repository interface {
 	CreateOrder(ctx context.Context, order domain.Order) (domain.Order, error)
 	GetOrder(ctx context.Context, id uuid.UUID) (domain.Order, error)
 	UpdateOrder(ctx context.Context, order domain.Order) (domain.Order, error)
@@ -41,7 +41,9 @@ type PaymentClient interface {
 
 type IDGenerator func() uuid.UUID
 
-type CreateOrderRequest struct {
-	UserID  uuid.UUID
-	PartIDs []uuid.UUID
+func (s *Service) validateContext(ctx context.Context) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	return nil
 }

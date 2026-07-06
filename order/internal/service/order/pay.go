@@ -1,4 +1,4 @@
-package service
+package order
 
 import (
 	"context"
@@ -8,11 +8,12 @@ import (
 
 	"github.com/horizoonn/factory-platform/order/internal/client/dto"
 	"github.com/horizoonn/factory-platform/order/internal/domain"
+	servicedto "github.com/horizoonn/factory-platform/order/internal/service/dto"
 )
 
-func (s *OrderService) PayOrder(ctx context.Context, req dto.PayOrderRequest) (domain.Order, error) {
-	if err := ctx.Err(); err != nil {
-		return domain.Order{}, fmt.Errorf("pay order context: %w", err)
+func (s *Service) PayOrder(ctx context.Context, req servicedto.PayOrderRequest) (domain.Order, error) {
+	if err := s.validateContext(ctx); err != nil {
+		return domain.Order{}, fmt.Errorf("pay order: %w", err)
 	}
 
 	if req.OrderID == uuid.Nil {
@@ -23,11 +24,7 @@ func (s *OrderService) PayOrder(ctx context.Context, req dto.PayOrderRequest) (d
 		return domain.Order{}, domain.ErrInvalidPaymentMethod
 	}
 
-	if s.orderRepository == nil || s.paymentClient == nil {
-		return domain.Order{}, domain.ErrNotImplemented
-	}
-
-	order, err := s.orderRepository.GetOrder(ctx, req.OrderID)
+	order, err := s.repository.GetOrder(ctx, req.OrderID)
 	if err != nil {
 		return domain.Order{}, fmt.Errorf("get order with id='%s' from repository: %w", req.OrderID, err)
 	}
@@ -55,7 +52,7 @@ func (s *OrderService) PayOrder(ctx context.Context, req dto.PayOrderRequest) (d
 	order.PaymentMethod = &req.PaymentMethod
 	order.Status = domain.OrderStatusPaid
 
-	updatedOrder, err := s.orderRepository.UpdateOrder(ctx, order)
+	updatedOrder, err := s.repository.UpdateOrder(ctx, order)
 	if err != nil {
 		return domain.Order{}, fmt.Errorf("update paid order: %w", err)
 	}
