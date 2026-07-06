@@ -9,7 +9,7 @@ services:
     ports:
       - ${POSTGRES_BIND_HOST}:${POSTGRES_EXTERNAL_PORT}:5432
     volumes:
-      - postgres_inventory_data:/var/lib/postgresql/data
+      - postgres_inventory_data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s

@@ -23,6 +23,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// OrderPaid — событие успешной оплаты заказа.
 type OrderPaid struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	EventUuid       string                 `protobuf:"bytes,1,opt,name=event_uuid,json=eventUuid,proto3" json:"event_uuid,omitempty"`
@@ -107,6 +108,7 @@ func (x *OrderPaid) GetOccurredAt() *timestamppb.Timestamp {
 	return nil
 }
 
+// ShipAssembled — событие завершения сборки корабля.
 type ShipAssembled struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	EventUuid     string                 `protobuf:"bytes,1,opt,name=event_uuid,json=eventUuid,proto3" json:"event_uuid,omitempty"`
@@ -206,7 +208,7 @@ const file_events_v1_order_proto_rawDesc = "" +
 	"\tuser_uuid\x18\x03 \x01(\tR\buserUuid\x12$\n" +
 	"\x0ebuild_time_sec\x18\x04 \x01(\x03R\fbuildTimeSec\x12;\n" +
 	"\voccurred_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"occurredAtBOZMgithub.com/horizoonn/factory-platform.git/shared/pkg/proto/events/v1;eventsv1b\x06proto3"
+	"occurredAtBKZIgithub.com/horizoonn/factory-platform/shared/pkg/proto/events/v1;eventsv1b\x06proto3"
 
 var (
 	file_events_v1_order_proto_rawDescOnce sync.Once

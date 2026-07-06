@@ -1,3 +1,3 @@
-module github.com/horizoonn/factory-platform.git/assembly
+module github.com/horizoonn/factory-platform/assembly
 
 go 1.26.2

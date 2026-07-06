@@ -3,11 +3,13 @@ package pgxpool
 import (
 	"context"
 	"fmt"
+	"net"
+	"net/url"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	postgresPool "github.com/horizoonn/factory-platform.git/platform/pkg/database/postgres/pool"
+	postgresPool "github.com/horizoonn/factory-platform/platform/pkg/database/postgres/pool"
 )
 
 type Pool struct {
@@ -17,15 +19,13 @@ type Pool struct {
 }
 
 func NewPool(ctx context.Context, config Config) (*Pool, error) {
-	connectionString := fmt.Sprintf(
-		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-		config.Host,
-		config.Port,
-		config.User,
-		config.Password,
-		config.Database,
-		config.SSLMode,
-	)
+	connectionString := (&url.URL{
+		Scheme:   "postgres",
+		User:     url.UserPassword(config.User, config.Password),
+		Host:     net.JoinHostPort(config.Host, config.Port),
+		Path:     config.Database,
+		RawQuery: "sslmode=" + config.SSLMode,
+	}).String()
 
 	pgxconfig, err := pgxpool.ParseConfig(connectionString)
 	if err != nil {

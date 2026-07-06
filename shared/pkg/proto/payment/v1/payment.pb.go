@@ -11,6 +11,7 @@ import (
 	sync "sync"
 	unsafe "unsafe"
 
+	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
@@ -22,6 +23,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// PaymentMethod — способ оплаты.
 type PaymentMethod int32
 
 const (
@@ -77,6 +79,7 @@ func (PaymentMethod) EnumDescriptor() ([]byte, []int) {
 	return file_payment_v1_payment_proto_rawDescGZIP(), []int{0}
 }
 
+// PayOrderRequest — запрос оплаты заказа.
 type PayOrderRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	OrderUuid     string                 `protobuf:"bytes,1,opt,name=order_uuid,json=orderUuid,proto3" json:"order_uuid,omitempty"`
@@ -137,6 +140,7 @@ func (x *PayOrderRequest) GetPaymentMethod() PaymentMethod {
 	return PaymentMethod_PAYMENT_METHOD_UNSPECIFIED
 }
 
+// PayOrderResponse — ответ с UUID транзакции.
 type PayOrderResponse struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	TransactionUuid string                 `protobuf:"bytes,1,opt,name=transaction_uuid,json=transactionUuid,proto3" json:"transaction_uuid,omitempty"`
@@ -186,12 +190,13 @@ var File_payment_v1_payment_proto protoreflect.FileDescriptor
 const file_payment_v1_payment_proto_rawDesc = "" +
 	"\n" +
 	"\x18payment/v1/payment.proto\x12\n" +
-	"payment.v1\"\x8f\x01\n" +
-	"\x0fPayOrderRequest\x12\x1d\n" +
+	"payment.v1\x1a\x1bbuf/validate/validate.proto\"\xaf\x01\n" +
+	"\x0fPayOrderRequest\x12'\n" +
 	"\n" +
-	"order_uuid\x18\x01 \x01(\tR\torderUuid\x12\x1b\n" +
-	"\tuser_uuid\x18\x02 \x01(\tR\buserUuid\x12@\n" +
-	"\x0epayment_method\x18\x03 \x01(\x0e2\x19.payment.v1.PaymentMethodR\rpaymentMethod\"=\n" +
+	"order_uuid\x18\x01 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\torderUuid\x12%\n" +
+	"\tuser_uuid\x18\x02 \x01(\tB\b\xbaH\x05r\x03\xb0\x01\x01R\buserUuid\x12L\n" +
+	"\x0epayment_method\x18\x03 \x01(\x0e2\x19.payment.v1.PaymentMethodB\n" +
+	"\xbaH\a\x82\x01\x04\x10\x01 \x00R\rpaymentMethod\"=\n" +
 	"\x10PayOrderResponse\x12)\n" +
 	"\x10transaction_uuid\x18\x01 \x01(\tR\x0ftransactionUuid*\xa3\x01\n" +
 	"\rPaymentMethod\x12\x1e\n" +
@@ -201,7 +206,7 @@ const file_payment_v1_payment_proto_rawDesc = "" +
 	"\x1aPAYMENT_METHOD_CREDIT_CARD\x10\x03\x12!\n" +
 	"\x1dPAYMENT_METHOD_INVESTOR_MONEY\x10\x042W\n" +
 	"\x0ePaymentService\x12E\n" +
-	"\bPayOrder\x12\x1b.payment.v1.PayOrderRequest\x1a\x1c.payment.v1.PayOrderResponseBQZOgithub.com/horizoonn/factory-platform.git/shared/pkg/proto/payment/v1;paymentv1b\x06proto3"
+	"\bPayOrder\x12\x1b.payment.v1.PayOrderRequest\x1a\x1c.payment.v1.PayOrderResponseBMZKgithub.com/horizoonn/factory-platform/shared/pkg/proto/payment/v1;paymentv1b\x06proto3"
 
 var (
 	file_payment_v1_payment_proto_rawDescOnce sync.Once

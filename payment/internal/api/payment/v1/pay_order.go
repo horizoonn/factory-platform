@@ -8,9 +8,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/horizoonn/factory-platform.git/payment/internal/domain"
-	paymentservice "github.com/horizoonn/factory-platform.git/payment/internal/service"
-	paymentpb "github.com/horizoonn/factory-platform.git/shared/pkg/proto/payment/v1"
+	"github.com/horizoonn/factory-platform/payment/internal/domain"
+	paymentservice "github.com/horizoonn/factory-platform/payment/internal/service"
+	paymentpb "github.com/horizoonn/factory-platform/shared/pkg/proto/payment/v1"
 )
 
 func (s *PaymentServer) PayOrder(ctx context.Context, req *paymentpb.PayOrderRequest) (*paymentpb.PayOrderResponse, error) {

@@ -5,7 +5,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/horizoonn/factory-platform.git/inventory/internal/domain"
+	"github.com/horizoonn/factory-platform/inventory/internal/domain"
 )
 
 type InventoryService struct {

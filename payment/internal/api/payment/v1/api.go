@@ -3,8 +3,8 @@ package paymentv1
 import (
 	"context"
 
-	paymentservice "github.com/horizoonn/factory-platform.git/payment/internal/service"
-	paymentpb "github.com/horizoonn/factory-platform.git/shared/pkg/proto/payment/v1"
+	paymentservice "github.com/horizoonn/factory-platform/payment/internal/service"
+	paymentpb "github.com/horizoonn/factory-platform/shared/pkg/proto/payment/v1"
 )
 
 type PaymentServer struct {

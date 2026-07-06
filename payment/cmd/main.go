@@ -11,12 +11,16 @@ import (
 	"syscall"
 	"time"
 
+	"buf.build/go/protovalidate"
+	protovalidatemiddleware "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/protovalidate"
 	"google.golang.org/grpc"
+	grpchealth "google.golang.org/grpc/health"
+	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 
-	paymentapi "github.com/horizoonn/factory-platform.git/payment/internal/api/payment/v1"
-	"github.com/horizoonn/factory-platform.git/payment/internal/config"
-	"github.com/horizoonn/factory-platform.git/payment/internal/service"
-	paymentv1 "github.com/horizoonn/factory-platform.git/shared/pkg/proto/payment/v1"
+	paymentapi "github.com/horizoonn/factory-platform/payment/internal/api/payment/v1"
+	"github.com/horizoonn/factory-platform/payment/internal/config"
+	"github.com/horizoonn/factory-platform/payment/internal/service"
+	paymentv1 "github.com/horizoonn/factory-platform/shared/pkg/proto/payment/v1"
 )
 
 func main() {
@@ -40,13 +44,23 @@ func run() error {
 		return fmt.Errorf("listen payment grpc address %q: %w", cfg.PaymentGRPC().Address(), err)
 	}
 	defer func() {
-		if err := listener.Close(); err != nil {
+		if err := listener.Close(); err != nil && !errors.Is(err, net.ErrClosed) {
 			slog.Warn("failed to close payment grpc listener", "error", err)
 		}
 	}()
 
-	grpcServer := grpc.NewServer()
+	validator, err := protovalidate.New()
+	if err != nil {
+		return fmt.Errorf("create protovalidate validator: %w", err)
+	}
+
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(protovalidatemiddleware.UnaryServerInterceptor(validator)),
+	)
 	paymentv1.RegisterPaymentServiceServer(grpcServer, paymentServer)
+	healthServer := grpchealth.NewServer()
+	healthpb.RegisterHealthServer(grpcServer, healthServer)
+	healthServer.SetServingStatus("", healthpb.HealthCheckResponse_SERVING)
 
 	serveErr := make(chan error, 1)
 	go func() {
