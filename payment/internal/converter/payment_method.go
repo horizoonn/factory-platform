@@ -1,11 +1,11 @@
-package paymentv1
+package converter
 
 import (
 	"github.com/horizoonn/factory-platform/payment/internal/domain"
 	paymentpb "github.com/horizoonn/factory-platform/shared/pkg/proto/payment/v1"
 )
 
-func paymentMethodToDomain(method paymentpb.PaymentMethod) (domain.PaymentMethod, error) {
+func PaymentMethodToDomain(method paymentpb.PaymentMethod) (domain.PaymentMethod, error) {
 	switch method {
 	case paymentpb.PaymentMethod_PAYMENT_METHOD_CARD:
 		return domain.PaymentMethodCard, nil

@@ -8,6 +8,8 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/horizoonn/factory-platform/inventory/internal/domain"
+	"github.com/horizoonn/factory-platform/inventory/internal/repository/converter"
+	"github.com/horizoonn/factory-platform/inventory/internal/repository/model"
 	postgrespool "github.com/horizoonn/factory-platform/platform/pkg/database/postgres/pool"
 )
 
@@ -23,8 +25,8 @@ func (r *Repository) GetPart(ctx context.Context, id uuid.UUID) (domain.Part, er
 	`
 	row := r.pool.QueryRow(ctx, query, id)
 
-	var model partModel
-	if err := model.scan(row); err != nil {
+	var partModel model.Part
+	if err := partModel.Scan(row); err != nil {
 		if errors.Is(err, postgrespool.ErrNoRows) {
 			return domain.Part{}, fmt.Errorf("part with id='%s': %w", id, domain.ErrNotFound)
 		}
@@ -32,5 +34,5 @@ func (r *Repository) GetPart(ctx context.Context, id uuid.UUID) (domain.Part, er
 		return domain.Part{}, fmt.Errorf("scan part row: %w", err)
 	}
 
-	return partModelToDomain(model), nil
+	return converter.PartModelToDomain(partModel), nil
 }

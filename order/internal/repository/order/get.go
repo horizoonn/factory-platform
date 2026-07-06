@@ -8,6 +8,8 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/horizoonn/factory-platform/order/internal/domain"
+	"github.com/horizoonn/factory-platform/order/internal/repository/converter"
+	"github.com/horizoonn/factory-platform/order/internal/repository/model"
 	postgrespool "github.com/horizoonn/factory-platform/platform/pkg/database/postgres/pool"
 )
 
@@ -23,8 +25,8 @@ func (r *Repository) GetOrder(ctx context.Context, id uuid.UUID) (domain.Order, 
 
 	row := r.pool.QueryRow(ctx, query, id)
 
-	var model orderModel
-	if err := model.scan(row); err != nil {
+	var orderModel model.Order
+	if err := orderModel.Scan(row); err != nil {
 		if errors.Is(err, postgrespool.ErrNoRows) {
 			return domain.Order{}, fmt.Errorf("order with id=%s: %w", id, domain.ErrNotFound)
 		}
@@ -32,7 +34,7 @@ func (r *Repository) GetOrder(ctx context.Context, id uuid.UUID) (domain.Order, 
 		return domain.Order{}, fmt.Errorf("scan order row: %w", err)
 	}
 
-	order, err := model.toDomain()
+	order, err := converter.OrderModelToDomain(orderModel)
 	if err != nil {
 		return domain.Order{}, fmt.Errorf("convert order model to domain: %w", err)
 	}

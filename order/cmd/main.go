@@ -12,16 +12,12 @@ import (
 	"syscall"
 	"time"
 
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-
 	"github.com/horizoonn/factory-platform/order/internal/api/health"
 	orderapi "github.com/horizoonn/factory-platform/order/internal/api/order/v1"
-	inventoryclient "github.com/horizoonn/factory-platform/order/internal/client/grpc/inventory/v1"
-	paymentclient "github.com/horizoonn/factory-platform/order/internal/client/grpc/payment/v1"
+	grpcclients "github.com/horizoonn/factory-platform/order/internal/client/grpc"
 	"github.com/horizoonn/factory-platform/order/internal/config"
-	repository "github.com/horizoonn/factory-platform/order/internal/repository/order"
-	"github.com/horizoonn/factory-platform/order/internal/service"
+	orderrepository "github.com/horizoonn/factory-platform/order/internal/repository/order"
+	orderservice "github.com/horizoonn/factory-platform/order/internal/service/order"
 	pgxpool "github.com/horizoonn/factory-platform/platform/pkg/database/postgres/pool/pgx"
 	orderopenapi "github.com/horizoonn/factory-platform/shared/pkg/openapi/order/v1"
 )
@@ -45,41 +41,26 @@ func run() error {
 	}
 	defer postgresPool.Close()
 
-	inventoryConn, err := grpc.NewClient(cfg.InventoryGRPC().Address(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	grpcClients, err := grpcclients.NewClients(cfg.InventoryGRPC().Address(), cfg.PaymentGRPC().Address())
 	if err != nil {
-		return fmt.Errorf("create inventory grpc client: %w", err)
+		return fmt.Errorf("create grpc clients: %w", err)
 	}
 	defer func() {
-		if err := inventoryConn.Close(); err != nil {
-			slog.Warn("failed to close inventory grpc connection", "error", err)
+		if err := grpcClients.Close(); err != nil {
+			slog.Warn("failed to close grpc clients", "error", err)
 		}
 	}()
 
-	paymentConn, err := grpc.NewClient(cfg.PaymentGRPC().Address(), grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		return fmt.Errorf("create payment grpc client: %w", err)
-	}
-	defer func() {
-		if err := paymentConn.Close(); err != nil {
-			slog.Warn("failed to close payment grpc connection", "error", err)
-		}
-	}()
-
-	orderRepository := repository.NewRepository(postgresPool)
-	inventoryClient := inventoryclient.NewClient(inventoryConn)
-	paymentClient := paymentclient.NewClient(paymentConn)
-	orderService := service.NewOrderService(orderRepository, inventoryClient, paymentClient)
-	orderHandler := orderapi.NewOrderHandler(orderService)
+	orderRepository := orderrepository.NewRepository(postgresPool)
+	orderService := orderservice.NewService(orderRepository, grpcClients.Inventory, grpcClients.Payment)
+	orderHandler := orderapi.NewHandler(orderService)
 
 	orderServer, err := orderopenapi.NewServer(orderHandler)
 	if err != nil {
 		return fmt.Errorf("create order openapi server: %w", err)
 	}
 
-	healthChecker := health.NewChecker(postgresPool, map[string]*grpc.ClientConn{
-		"inventory": inventoryConn,
-		"payment":   paymentConn,
-	})
+	healthChecker := health.NewChecker(postgresPool, grpcClients.Connections())
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", healthChecker.Handler)

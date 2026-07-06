@@ -1,4 +1,4 @@
-package service
+package order
 
 import (
 	"context"
@@ -7,11 +7,12 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/horizoonn/factory-platform/order/internal/domain"
+	servicedto "github.com/horizoonn/factory-platform/order/internal/service/dto"
 )
 
-func (s *OrderService) CreateOrder(ctx context.Context, req CreateOrderRequest) (domain.Order, error) {
-	if err := ctx.Err(); err != nil {
-		return domain.Order{}, fmt.Errorf("create order context: %w", err)
+func (s *Service) CreateOrder(ctx context.Context, req servicedto.CreateOrderRequest) (domain.Order, error) {
+	if err := s.validateContext(ctx); err != nil {
+		return domain.Order{}, fmt.Errorf("create order: %w", err)
 	}
 
 	if req.UserID == uuid.Nil {
@@ -20,10 +21,6 @@ func (s *OrderService) CreateOrder(ctx context.Context, req CreateOrderRequest) 
 
 	if len(req.PartIDs) == 0 {
 		return domain.Order{}, domain.ErrEmptyParts
-	}
-
-	if s.inventoryClient == nil || s.orderRepository == nil {
-		return domain.Order{}, domain.ErrNotImplemented
 	}
 
 	parts, err := s.inventoryClient.ListParts(ctx, req.PartIDs)
@@ -59,7 +56,7 @@ func (s *OrderService) CreateOrder(ctx context.Context, req CreateOrderRequest) 
 		Status:     domain.OrderStatusPendingPayment,
 	}
 
-	createdOrder, err := s.orderRepository.CreateOrder(ctx, order)
+	createdOrder, err := s.repository.CreateOrder(ctx, order)
 	if err != nil {
 		return domain.Order{}, fmt.Errorf("create order in repository: %w", err)
 	}

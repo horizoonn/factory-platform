@@ -4,22 +4,23 @@ import (
 	"context"
 	"errors"
 
-	"github.com/horizoonn/factory-platform/order/internal/client/dto"
+	"github.com/horizoonn/factory-platform/order/internal/converter"
 	"github.com/horizoonn/factory-platform/order/internal/domain"
+	servicedto "github.com/horizoonn/factory-platform/order/internal/service/dto"
 	orderopenapi "github.com/horizoonn/factory-platform/shared/pkg/openapi/order/v1"
 )
 
-func (h *OrderHandler) PayOrder(ctx context.Context, req *orderopenapi.PayOrderRequest, params orderopenapi.PayOrderParams) (orderopenapi.PayOrderRes, error) {
-	if h.orderService == nil {
+func (h *Handler) PayOrder(ctx context.Context, req *orderopenapi.PayOrderRequest, params orderopenapi.PayOrderParams) (orderopenapi.PayOrderRes, error) {
+	if h.service == nil {
 		return nil, domain.ErrNotImplemented
 	}
 
-	paymentMethod, err := paymentMethodToDomain(req.PaymentMethod)
+	paymentMethod, err := converter.PaymentMethodToDomain(req.PaymentMethod)
 	if err != nil {
 		return badRequest("invalid payment method"), nil
 	}
 
-	order, err := h.orderService.PayOrder(ctx, dto.PayOrderRequest{
+	order, err := h.service.PayOrder(ctx, servicedto.PayOrderRequest{
 		OrderID:       params.OrderUUID,
 		PaymentMethod: paymentMethod,
 	})

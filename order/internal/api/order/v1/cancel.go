@@ -8,12 +8,12 @@ import (
 	orderopenapi "github.com/horizoonn/factory-platform/shared/pkg/openapi/order/v1"
 )
 
-func (h *OrderHandler) CancelOrder(ctx context.Context, params orderopenapi.CancelOrderParams) (orderopenapi.CancelOrderRes, error) {
-	if h.orderService == nil {
+func (h *Handler) CancelOrder(ctx context.Context, params orderopenapi.CancelOrderParams) (orderopenapi.CancelOrderRes, error) {
+	if h.service == nil {
 		return nil, domain.ErrNotImplemented
 	}
 
-	if err := h.orderService.CancelOrder(ctx, params.OrderUUID); err != nil {
+	if err := h.service.CancelOrder(ctx, params.OrderUUID); err != nil {
 		if errors.Is(err, domain.ErrOrderIDRequired) {
 			return badRequest("order id is required"), nil
 		}

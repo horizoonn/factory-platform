@@ -9,10 +9,10 @@ import (
 	inventorypb "github.com/horizoonn/factory-platform/shared/pkg/proto/inventory/v1"
 )
 
-type InventoryServer struct {
+type Server struct {
 	inventorypb.UnimplementedInventoryServiceServer
 
-	inventoryService InventoryService
+	service InventoryService
 }
 
 type InventoryService interface {
@@ -20,8 +20,8 @@ type InventoryService interface {
 	ListParts(ctx context.Context, filter domain.PartsFilter) ([]domain.Part, error)
 }
 
-func NewInventoryServer(inventoryService InventoryService) *InventoryServer {
-	return &InventoryServer{
-		inventoryService: inventoryService,
+func NewServer(service InventoryService) *Server {
+	return &Server{
+		service: service,
 	}
 }
