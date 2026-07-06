@@ -1,8 +1,8 @@
 package paymentv1
 
 import (
-	"github.com/horizoonn/factory-platform.git/payment/internal/domain"
-	paymentpb "github.com/horizoonn/factory-platform.git/shared/pkg/proto/payment/v1"
+	"github.com/horizoonn/factory-platform/payment/internal/domain"
+	paymentpb "github.com/horizoonn/factory-platform/shared/pkg/proto/payment/v1"
 )
 
 func paymentMethodToDomain(method paymentpb.PaymentMethod) (domain.PaymentMethod, error) {

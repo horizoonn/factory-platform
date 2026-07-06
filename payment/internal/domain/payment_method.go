@@ -1,13 +1,13 @@
 package domain
 
-type PaymentMethod int
+type PaymentMethod string
 
 const (
-	PaymentMethodUnknown PaymentMethod = iota
-	PaymentMethodCard
-	PaymentMethodSBP
-	PaymentMethodCreditCard
-	PaymentMethodInvestorMoney
+	PaymentMethodUnknown       PaymentMethod = ""
+	PaymentMethodCard          PaymentMethod = "CARD"
+	PaymentMethodSBP           PaymentMethod = "SBP"
+	PaymentMethodCreditCard    PaymentMethod = "CREDIT_CARD"
+	PaymentMethodInvestorMoney PaymentMethod = "INVESTOR_MONEY"
 )
 
 func (m PaymentMethod) Valid() bool {

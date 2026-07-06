@@ -3,7 +3,7 @@ package service
 import (
 	"github.com/google/uuid"
 
-	"github.com/horizoonn/factory-platform.git/payment/internal/domain"
+	"github.com/horizoonn/factory-platform/payment/internal/domain"
 )
 
 type PaymentService struct {
