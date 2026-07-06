@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"github.com/horizoonn/factory-platform/inventory/internal/domain"
+	"github.com/horizoonn/factory-platform/inventory/internal/repository/converter"
+	"github.com/horizoonn/factory-platform/inventory/internal/repository/model"
 )
 
 func (r *Repository) ListParts(ctx context.Context, filter domain.PartsFilter) ([]domain.Part, error) {
@@ -18,8 +20,10 @@ func (r *Repository) ListParts(ctx context.Context, filter domain.PartsFilter) (
 	FROM platform.parts
 	`
 
-	conditions := make([]string, 0, 5)
-	args := make([]any, 0, 5)
+	const maxFilterConditions = 5
+
+	conditions := make([]string, 0, maxFilterConditions)
+	args := make([]any, 0, maxFilterConditions)
 	addCondition := func(condition string, arg any) {
 		args = append(args, arg)
 		conditions = append(conditions, fmt.Sprintf(condition, len(args)))
@@ -57,12 +61,12 @@ func (r *Repository) ListParts(ctx context.Context, filter domain.PartsFilter) (
 
 	parts := make([]domain.Part, 0)
 	for rows.Next() {
-		var model partModel
-		if err := model.scan(rows); err != nil {
+		var partModel model.Part
+		if err := partModel.Scan(rows); err != nil {
 			return nil, fmt.Errorf("scan part row: %w", err)
 		}
 
-		parts = append(parts, partModelToDomain(model))
+		parts = append(parts, converter.PartModelToDomain(partModel))
 	}
 
 	if err := rows.Err(); err != nil {

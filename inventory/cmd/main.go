@@ -19,8 +19,8 @@ import (
 
 	inventoryapi "github.com/horizoonn/factory-platform/inventory/internal/api/inventory/v1"
 	"github.com/horizoonn/factory-platform/inventory/internal/config"
-	repository "github.com/horizoonn/factory-platform/inventory/internal/repository/part"
-	"github.com/horizoonn/factory-platform/inventory/internal/service"
+	partrepository "github.com/horizoonn/factory-platform/inventory/internal/repository/part"
+	partservice "github.com/horizoonn/factory-platform/inventory/internal/service/part"
 	pgxpool "github.com/horizoonn/factory-platform/platform/pkg/database/postgres/pool/pgx"
 	inventorypb "github.com/horizoonn/factory-platform/shared/pkg/proto/inventory/v1"
 )
@@ -44,9 +44,9 @@ func run() error {
 	}
 	defer postgresPool.Close()
 
-	postgresRepository := repository.NewRepository(postgresPool)
-	inventoryService := service.NewInventoryService(postgresRepository)
-	inventoryServer := inventoryapi.NewInventoryServer(inventoryService)
+	postgresRepository := partrepository.NewRepository(postgresPool)
+	inventoryService := partservice.NewService(postgresRepository)
+	inventoryServer := inventoryapi.NewServer(inventoryService)
 
 	listener, err := net.Listen("tcp", cfg.InventoryGRPC().Address())
 	if err != nil {

@@ -1,4 +1,4 @@
-package service
+package part
 
 import (
 	"context"
@@ -8,17 +8,17 @@ import (
 	"github.com/horizoonn/factory-platform/inventory/internal/domain"
 )
 
-type InventoryService struct {
-	inventoryRepository InventoryRepository
+type Service struct {
+	repository Repository
 }
 
-func NewInventoryService(repo InventoryRepository) *InventoryService {
-	return &InventoryService{
-		inventoryRepository: repo,
+func NewService(repo Repository) *Service {
+	return &Service{
+		repository: repo,
 	}
 }
 
-type InventoryRepository interface {
+type Repository interface {
 	GetPart(ctx context.Context, id uuid.UUID) (domain.Part, error)
 	ListParts(ctx context.Context, filter domain.PartsFilter) ([]domain.Part, error)
 }

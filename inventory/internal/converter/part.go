@@ -1,4 +1,4 @@
-package inventoryv1
+package converter
 
 import (
 	"github.com/google/uuid"
@@ -10,26 +10,21 @@ import (
 	inventorypb "github.com/horizoonn/factory-platform/shared/pkg/proto/inventory/v1"
 )
 
-func partsToProto(parts []domain.Part) []*inventorypb.Part {
+func PartsToProto(parts []domain.Part) []*inventorypb.Part {
 	partsProto := make([]*inventorypb.Part, 0, len(parts))
 	for _, part := range parts {
-		partsProto = append(partsProto, partToProto(&part))
+		partsProto = append(partsProto, PartToProto(&part))
 	}
 
 	return partsProto
 }
 
-func partToProto(part *domain.Part) *inventorypb.Part {
-	var tags []string
-	if part.Tags != nil {
-		tags = part.Tags
-	}
-
+func PartToProto(part *domain.Part) *inventorypb.Part {
 	var meta map[string]*inventorypb.Value
 	if part.Metadata != nil {
 		meta = make(map[string]*inventorypb.Value, len(part.Metadata))
 		for k, v := range part.Metadata {
-			meta[k] = valueToProto(v)
+			meta[k] = ValueToProto(v)
 		}
 	}
 
@@ -71,14 +66,14 @@ func partToProto(part *domain.Part) *inventorypb.Part {
 		Category:      inventorypb.Category(int32(part.Category)), //nolint:gosec
 		Dimensions:    dimensionsProto,
 		Manufacturer:  manufacturerProto,
-		Tags:          tags,
+		Tags:          part.Tags,
 		Metadata:      meta,
 		CreatedAt:     createdAtProto,
 		UpdatedAt:     updatedAtProto,
 	}
 }
 
-func valueToProto(v *domain.Value) *inventorypb.Value {
+func ValueToProto(v *domain.Value) *inventorypb.Value {
 	if v == nil {
 		return &inventorypb.Value{}
 	}
@@ -112,7 +107,7 @@ func valueToProto(v *domain.Value) *inventorypb.Value {
 	}
 }
 
-func filterToDomain(filter *inventorypb.PartsFilter) (domain.PartsFilter, error) {
+func FilterToDomain(filter *inventorypb.PartsFilter) (domain.PartsFilter, error) {
 	if filter == nil {
 		return domain.PartsFilter{}, nil
 	}
