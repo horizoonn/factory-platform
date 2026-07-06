@@ -1,4 +1,4 @@
-module github.com/horizoonn/factory-platform.git/platform
+module github.com/horizoonn/factory-platform/platform
 
 go 1.26.2
 
