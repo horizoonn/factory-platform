@@ -1,0 +1,28 @@
+all: false
+template: testify
+formatter: goimports
+log-level: info
+force-file-write: true
+
+pkgname: mocks
+structname: "{{.InterfaceName}}"
+
+template-data:
+  unroll-variadic: true
+
+packages:
+  github.com/horizoonn/factory-platform/order/internal/service/order:
+    config:
+      dir: "order/internal/service/mocks"
+      filename: "mock_order_service.go"
+    interfaces:
+      Repository:
+      InventoryClient:
+      PaymentClient:
+
+  github.com/horizoonn/factory-platform/inventory/internal/service/part:
+    config:
+      dir: "inventory/internal/service/mocks"
+      filename: "mock_part_service.go"
+    interfaces:
+      Repository:
