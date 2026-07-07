@@ -12,12 +12,15 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/jackc/pgx/v5/stdlib"
+
 	"github.com/horizoonn/factory-platform/order/internal/api/health"
 	orderapi "github.com/horizoonn/factory-platform/order/internal/api/order/v1"
 	grpcclients "github.com/horizoonn/factory-platform/order/internal/client/grpc"
 	"github.com/horizoonn/factory-platform/order/internal/config"
 	orderrepository "github.com/horizoonn/factory-platform/order/internal/repository/order"
 	orderservice "github.com/horizoonn/factory-platform/order/internal/service/order"
+	"github.com/horizoonn/factory-platform/platform/pkg/database/postgres/migrator"
 	pgxpool "github.com/horizoonn/factory-platform/platform/pkg/database/postgres/pool/pgx"
 	orderopenapi "github.com/horizoonn/factory-platform/shared/pkg/openapi/order/v1"
 )
@@ -40,6 +43,17 @@ func run() error {
 		return fmt.Errorf("create postgres pool: %w", err)
 	}
 	defer postgresPool.Close()
+
+	db := stdlib.OpenDBFromPool(postgresPool.Pool)
+	defer func() {
+		if err := db.Close(); err != nil {
+			slog.Warn("failed to close order migration db", "error", err)
+		}
+	}()
+	m := migrator.NewMigrator(db, cfg.Migrations().Dir())
+	if err := m.Up(ctx); err != nil {
+		return fmt.Errorf("run order migrations: %w", err)
+	}
 
 	grpcClients, err := grpcclients.NewClients(cfg.InventoryGRPC().Address(), cfg.PaymentGRPC().Address())
 	if err != nil {

@@ -6,6 +6,7 @@ type Config interface {
 	OrderHTTP() OrderHTTPConfig
 	InventoryGRPC() InventoryGRPCConfig
 	PaymentGRPC() PaymentGRPCConfig
+	Migrations() MigrationsConfig
 	App() AppConfig
 }
 
@@ -19,6 +20,10 @@ type InventoryGRPCConfig interface {
 
 type PaymentGRPCConfig interface {
 	Address() string
+}
+
+type MigrationsConfig interface {
+	Dir() string
 }
 
 type AppConfig interface {

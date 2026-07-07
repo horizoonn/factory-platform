@@ -1,0 +1,4 @@
+networks:
+  microservices-net:
+    name: microservices-net
+    external: false
