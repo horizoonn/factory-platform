@@ -6,29 +6,29 @@ import (
 	"github.com/horizoonn/factory-platform/payment/internal/config/env"
 )
 
-type EnvConfig struct {
-	paymentGRPC env.PaymentGRPCConfig
-	app         env.AppConfig
+type envConfig struct {
+	paymentGRPC PaymentGRPCConfig
+	app         AppConfig
 }
 
-func NewConfig() (EnvConfig, error) {
+func NewConfig() (Config, error) {
 	paymentGRPCConfig, err := env.NewPaymentGRPCConfig()
 	if err != nil {
-		return EnvConfig{}, fmt.Errorf("get payment grpc config: %w", err)
+		return nil, fmt.Errorf("get payment grpc config: %w", err)
 	}
 
 	appConfig, err := env.NewAppConfig()
 	if err != nil {
-		return EnvConfig{}, fmt.Errorf("get app config: %w", err)
+		return nil, fmt.Errorf("get app config: %w", err)
 	}
 
-	return EnvConfig{
+	return envConfig{
 		paymentGRPC: paymentGRPCConfig,
 		app:         appConfig,
 	}, nil
 }
 
-func NewConfigMust() EnvConfig {
+func NewConfigMust() Config {
 	config, err := NewConfig()
 	if err != nil {
 		err = fmt.Errorf("get payment config: %w", err)
@@ -38,10 +38,10 @@ func NewConfigMust() EnvConfig {
 	return config
 }
 
-func (c EnvConfig) PaymentGRPC() PaymentGRPCConfig {
+func (c envConfig) PaymentGRPC() PaymentGRPCConfig {
 	return c.paymentGRPC
 }
 
-func (c EnvConfig) App() AppConfig {
+func (c envConfig) App() AppConfig {
 	return c.app
 }
