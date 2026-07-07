@@ -463,7 +463,7 @@ tasks:
         msg: "Создай deploy/env/inventory.env из inventory.env.example"
     cmds:
       - |
-        (cd inventory && go run ./cmd)
+        go run ./inventory/cmd
 
   run:payment:
     desc: "Запуск PaymentService локально"
@@ -483,8 +483,7 @@ tasks:
         msg: "Создай deploy/env/order.env из order.env.example"
     cmds:
       - |
-        (cd order && go run ./cmd)
-  
+        go run ./order/cmd
   install-goose:
     desc: "Установка goose в каталог bin"
     cmds:

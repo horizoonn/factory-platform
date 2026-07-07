@@ -13,6 +13,7 @@ import (
 
 	"buf.build/go/protovalidate"
 	protovalidatemiddleware "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/protovalidate"
+	"github.com/jackc/pgx/v5/stdlib"
 	"google.golang.org/grpc"
 	grpchealth "google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
@@ -21,6 +22,7 @@ import (
 	"github.com/horizoonn/factory-platform/inventory/internal/config"
 	partrepository "github.com/horizoonn/factory-platform/inventory/internal/repository/part"
 	partservice "github.com/horizoonn/factory-platform/inventory/internal/service/part"
+	"github.com/horizoonn/factory-platform/platform/pkg/database/postgres/migrator"
 	pgxpool "github.com/horizoonn/factory-platform/platform/pkg/database/postgres/pool/pgx"
 	inventorypb "github.com/horizoonn/factory-platform/shared/pkg/proto/inventory/v1"
 )
@@ -43,6 +45,17 @@ func run() error {
 		return fmt.Errorf("create postgres pool: %w", err)
 	}
 	defer postgresPool.Close()
+
+	db := stdlib.OpenDBFromPool(postgresPool.Pool)
+	defer func() {
+		if err := db.Close(); err != nil {
+			slog.Warn("failed to close inventory migration db", "error", err)
+		}
+	}()
+	m := migrator.NewMigrator(db, cfg.Migrations().Dir())
+	if err := m.Up(ctx); err != nil {
+		return fmt.Errorf("run inventory migrations: %w", err)
+	}
 
 	postgresRepository := partrepository.NewRepository(postgresPool)
 	inventoryService := partservice.NewService(postgresRepository)

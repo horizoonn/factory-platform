@@ -10,6 +10,7 @@ type EnvConfig struct {
 	orderHTTP     env.OrderHTTPConfig
 	inventoryGRPC env.InventoryGRPCConfig
 	paymentGRPC   env.PaymentGRPCConfig
+	migrations    env.MigrationsConfig
 	app           env.AppConfig
 }
 
@@ -29,6 +30,11 @@ func NewConfig() (EnvConfig, error) {
 		return EnvConfig{}, fmt.Errorf("get payment grpc config: %w", err)
 	}
 
+	migrationsConfig, err := env.NewMigrationsConfig()
+	if err != nil {
+		return EnvConfig{}, fmt.Errorf("get migrations config: %w", err)
+	}
+
 	appConfig, err := env.NewAppConfig()
 	if err != nil {
 		return EnvConfig{}, fmt.Errorf("get app config: %w", err)
@@ -38,6 +44,7 @@ func NewConfig() (EnvConfig, error) {
 		orderHTTP:     orderHTTPConfig,
 		inventoryGRPC: inventoryGRPCConfig,
 		paymentGRPC:   paymentGRPCConfig,
+		migrations:    migrationsConfig,
 		app:           appConfig,
 	}, nil
 }
@@ -62,6 +69,10 @@ func (c EnvConfig) InventoryGRPC() InventoryGRPCConfig {
 
 func (c EnvConfig) PaymentGRPC() PaymentGRPCConfig {
 	return c.paymentGRPC
+}
+
+func (c EnvConfig) Migrations() MigrationsConfig {
+	return c.migrations
 }
 
 func (c EnvConfig) App() AppConfig {
