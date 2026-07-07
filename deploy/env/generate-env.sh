@@ -3,7 +3,6 @@
 # Директория со скриптом
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TEMPLATE_DIR="$SCRIPT_DIR"
-COMPOSE_DIR="$SCRIPT_DIR/../compose"
 
 # Используем переданную переменную ENV_SUBST или системный envsubst
 if [ -z "$ENV_SUBST" ]; then
@@ -30,7 +29,7 @@ set +a
 process_template() {
   local service=$1
   local template="$TEMPLATE_DIR/${service}.env.template"
-  local output="$COMPOSE_DIR/${service}/.env"
+  local output="$TEMPLATE_DIR/${service}.env"
   
   echo "Обработка шаблона для сервиса $service..."
   
@@ -38,9 +37,6 @@ process_template() {
     echo "⚠️ Шаблон $template не найден, пропускаем..."
     return 0
   fi
-  
-  # Создаем директорию, если она еще не существует
-  mkdir -p "$(dirname "$output")"
   
   # Используем envsubst для замены переменных в шаблоне
   $ENV_SUBST < "$template" > "$output"

@@ -47,7 +47,7 @@ vars:
   ORDER_COMPOSE_FILE: '{{.ROOT_DIR}}/deploy/compose/order/docker-compose.yaml'
 
   MODULES: assembly inventory order payment platform iam notification shared
-  SERVICES: core,assembly,inventory,order,payment,iam,notification
+  SERVICES: inventory,order,payment
 
 tasks:
   install-formatters:
@@ -396,7 +396,7 @@ tasks:
     deps: [infra:network]
     preconditions:
       - sh: test -f {{.INVENTORY_ENV_FILE}}
-        msg: "Создай deploy/env/inventory.env из inventory.env.example"
+        msg: "Создай deploy/env/inventory.env через task env:generate"
       - sh: test -f {{.INVENTORY_COMPOSE_FILE}}
         msg: "Не найден {{.INVENTORY_COMPOSE_FILE}}"
     cmds:
@@ -408,7 +408,7 @@ tasks:
     desc: "Остановка Postgres для InventoryService"
     preconditions:
       - sh: test -f {{.INVENTORY_ENV_FILE}}
-        msg: "Создай deploy/env/inventory.env из inventory.env.example"
+        msg: "Создай deploy/env/inventory.env через task env:generate"
       - sh: test -f {{.INVENTORY_COMPOSE_FILE}}
         msg: "Не найден {{.INVENTORY_COMPOSE_FILE}}"
     cmds:
@@ -420,7 +420,7 @@ tasks:
     deps: [infra:network]
     preconditions:
       - sh: test -f {{.ORDER_ENV_FILE}}
-        msg: "Создай deploy/env/order.env из order.env.example"
+        msg: "Создай deploy/env/order.env через task env:generate"
       - sh: test -f {{.ORDER_COMPOSE_FILE}}
         msg: "Не найден {{.ORDER_COMPOSE_FILE}}"
     cmds:
@@ -432,7 +432,7 @@ tasks:
     desc: "Остановка Postgres для OrderService"
     preconditions:
       - sh: test -f {{.ORDER_ENV_FILE}}
-        msg: "Создай deploy/env/order.env из order.env.example"
+        msg: "Создай deploy/env/order.env через task env:generate"
       - sh: test -f {{.ORDER_COMPOSE_FILE}}
         msg: "Не найден {{.ORDER_COMPOSE_FILE}}"
     cmds:
@@ -464,7 +464,7 @@ tasks:
     dotenv: ['deploy/env/inventory.env']
     preconditions:
       - sh: test -f deploy/env/inventory.env
-        msg: "Создай deploy/env/inventory.env из inventory.env.example"
+        msg: "Создай deploy/env/inventory.env через task env:generate"
     cmds:
       - |
         go run ./inventory/cmd
@@ -474,7 +474,7 @@ tasks:
     dotenv: ['deploy/env/payment.env']
     preconditions:
       - sh: test -f deploy/env/payment.env
-        msg: "Создай deploy/env/payment.env из payment.env.example"
+        msg: "Создай deploy/env/payment.env через task env:generate"
     cmds:
       - |
         (cd payment && go run ./cmd)
@@ -484,7 +484,7 @@ tasks:
     dotenv: ['deploy/env/order.env']
     preconditions:
       - sh: test -f deploy/env/order.env
-        msg: "Создай deploy/env/order.env из order.env.example"
+        msg: "Создай deploy/env/order.env через task env:generate"
     cmds:
       - |
         go run ./order/cmd
@@ -505,7 +505,7 @@ tasks:
     dotenv: ['deploy/env/inventory.env']
     preconditions:
       - sh: test -f deploy/env/inventory.env
-        msg: "Создай deploy/env/inventory.env из inventory.env.example"
+        msg: "Создай deploy/env/inventory.env через task env:generate"
     cmds:
       - |
         {{.GOOSE}} -dir inventory/migrations postgres \
@@ -518,7 +518,7 @@ tasks:
     dotenv: ['deploy/env/inventory.env']
     preconditions:
       - sh: test -f deploy/env/inventory.env
-        msg: "Создай deploy/env/inventory.env из inventory.env.example"
+        msg: "Создай deploy/env/inventory.env через task env:generate"
     cmds:
       - |
         {{.GOOSE}} -dir inventory/migrations postgres \
@@ -531,7 +531,7 @@ tasks:
     dotenv: ['deploy/env/inventory.env']
     preconditions:
       - sh: test -f deploy/env/inventory.env
-        msg: "Создай deploy/env/inventory.env из inventory.env.example"
+        msg: "Создай deploy/env/inventory.env через task env:generate"
     cmds:
       - |
         {{.GOOSE}} -dir inventory/migrations postgres \
@@ -544,7 +544,7 @@ tasks:
     dotenv: ['deploy/env/order.env']
     preconditions:
       - sh: test -f deploy/env/order.env
-        msg: "Создай deploy/env/order.env из order.env.example"
+        msg: "Создай deploy/env/order.env через task env:generate"
     cmds:
       - |
         {{.GOOSE}} -dir order/migrations postgres \
@@ -564,7 +564,7 @@ tasks:
     dotenv: ['deploy/env/order.env']
     preconditions:
       - sh: test -f deploy/env/order.env
-        msg: "Создай deploy/env/order.env из order.env.example"
+        msg: "Создай deploy/env/order.env через task env:generate"
     cmds:
       - |
         {{.GOOSE}} -dir order/migrations postgres \
@@ -577,7 +577,7 @@ tasks:
     dotenv: ['deploy/env/order.env']
     preconditions:
       - sh: test -f deploy/env/order.env
-        msg: "Создай deploy/env/order.env из order.env.example"
+        msg: "Создай deploy/env/order.env через task env:generate"
     cmds:
       - |
         {{.GOOSE}} -dir order/migrations postgres \
@@ -695,7 +695,7 @@ tasks:
         echo "🎉 Базовая API-проверка завершена"
 
   env:install-envsubst:
-    desc: "Устанавка envsubst в bin/"
+    desc: "Установка envsubst в bin/"
     cmds:
       - |
         [ -f {{.ENVSUBST}} ] || {
