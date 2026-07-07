@@ -7,21 +7,21 @@ import (
 	"github.com/kelseyhightower/envconfig"
 )
 
-type InventoryGRPCConfig struct {
+type inventoryGRPCConfig struct {
 	Host string `envconfig:"HOST" default:"0.0.0.0"`
 	Port string `envconfig:"PORT" required:"true"`
 }
 
-func NewInventoryGRPCConfig() (InventoryGRPCConfig, error) {
-	var config InventoryGRPCConfig
+func NewInventoryGRPCConfig() (inventoryGRPCConfig, error) {
+	var config inventoryGRPCConfig
 
 	if err := envconfig.Process("INVENTORY_GRPC", &config); err != nil {
-		return InventoryGRPCConfig{}, fmt.Errorf("process inventory grpc envconfig: %w", err)
+		return inventoryGRPCConfig{}, fmt.Errorf("process inventory grpc envconfig: %w", err)
 	}
 
 	return config, nil
 }
 
-func (c InventoryGRPCConfig) Address() string {
+func (c inventoryGRPCConfig) Address() string {
 	return net.JoinHostPort(c.Host, c.Port)
 }

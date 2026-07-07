@@ -6,41 +6,41 @@ import (
 	"github.com/horizoonn/factory-platform/order/internal/config/env"
 )
 
-type EnvConfig struct {
-	orderHTTP     env.OrderHTTPConfig
-	inventoryGRPC env.InventoryGRPCConfig
-	paymentGRPC   env.PaymentGRPCConfig
-	migrations    env.MigrationsConfig
-	app           env.AppConfig
+type envConfig struct {
+	orderHTTP     OrderHTTPConfig
+	inventoryGRPC InventoryGRPCConfig
+	paymentGRPC   PaymentGRPCConfig
+	migrations    MigrationsConfig
+	app           AppConfig
 }
 
-func NewConfig() (EnvConfig, error) {
+func NewConfig() (Config, error) {
 	orderHTTPConfig, err := env.NewOrderHTTPConfig()
 	if err != nil {
-		return EnvConfig{}, fmt.Errorf("get order http config: %w", err)
+		return nil, fmt.Errorf("get order http config: %w", err)
 	}
 
 	inventoryGRPCConfig, err := env.NewInventoryGRPCConfig()
 	if err != nil {
-		return EnvConfig{}, fmt.Errorf("get inventory grpc config: %w", err)
+		return nil, fmt.Errorf("get inventory grpc config: %w", err)
 	}
 
 	paymentGRPCConfig, err := env.NewPaymentGRPCConfig()
 	if err != nil {
-		return EnvConfig{}, fmt.Errorf("get payment grpc config: %w", err)
+		return nil, fmt.Errorf("get payment grpc config: %w", err)
 	}
 
 	migrationsConfig, err := env.NewMigrationsConfig()
 	if err != nil {
-		return EnvConfig{}, fmt.Errorf("get migrations config: %w", err)
+		return nil, fmt.Errorf("get migrations config: %w", err)
 	}
 
 	appConfig, err := env.NewAppConfig()
 	if err != nil {
-		return EnvConfig{}, fmt.Errorf("get app config: %w", err)
+		return nil, fmt.Errorf("get app config: %w", err)
 	}
 
-	return EnvConfig{
+	return envConfig{
 		orderHTTP:     orderHTTPConfig,
 		inventoryGRPC: inventoryGRPCConfig,
 		paymentGRPC:   paymentGRPCConfig,
@@ -49,7 +49,7 @@ func NewConfig() (EnvConfig, error) {
 	}, nil
 }
 
-func NewConfigMust() EnvConfig {
+func NewConfigMust() Config {
 	config, err := NewConfig()
 	if err != nil {
 		err = fmt.Errorf("get order config: %w", err)
@@ -59,22 +59,22 @@ func NewConfigMust() EnvConfig {
 	return config
 }
 
-func (c EnvConfig) OrderHTTP() OrderHTTPConfig {
+func (c envConfig) OrderHTTP() OrderHTTPConfig {
 	return c.orderHTTP
 }
 
-func (c EnvConfig) InventoryGRPC() InventoryGRPCConfig {
+func (c envConfig) InventoryGRPC() InventoryGRPCConfig {
 	return c.inventoryGRPC
 }
 
-func (c EnvConfig) PaymentGRPC() PaymentGRPCConfig {
+func (c envConfig) PaymentGRPC() PaymentGRPCConfig {
 	return c.paymentGRPC
 }
 
-func (c EnvConfig) Migrations() MigrationsConfig {
+func (c envConfig) Migrations() MigrationsConfig {
 	return c.migrations
 }
 
-func (c EnvConfig) App() AppConfig {
+func (c envConfig) App() AppConfig {
 	return c.app
 }

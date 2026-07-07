@@ -7,21 +7,21 @@ import (
 	"github.com/kelseyhightower/envconfig"
 )
 
-type PaymentGRPCConfig struct {
+type paymentGRPCConfig struct {
 	Host string `envconfig:"HOST" required:"true"`
 	Port string `envconfig:"PORT" required:"true"`
 }
 
-func NewPaymentGRPCConfig() (PaymentGRPCConfig, error) {
-	var config PaymentGRPCConfig
+func NewPaymentGRPCConfig() (paymentGRPCConfig, error) {
+	var config paymentGRPCConfig
 
 	if err := envconfig.Process("PAYMENT_GRPC", &config); err != nil {
-		return PaymentGRPCConfig{}, fmt.Errorf("process payment grpc envconfig: %w", err)
+		return paymentGRPCConfig{}, fmt.Errorf("process payment grpc envconfig: %w", err)
 	}
 
 	return config, nil
 }
 
-func (c PaymentGRPCConfig) Address() string {
+func (c paymentGRPCConfig) Address() string {
 	return net.JoinHostPort(c.Host, c.Port)
 }
