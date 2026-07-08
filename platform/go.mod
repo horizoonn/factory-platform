@@ -6,6 +6,8 @@ require (
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/pressly/goose/v3 v3.27.2
+	go.uber.org/zap v1.28.0
+	golang.org/x/sync v0.21.0
 )
 
 require (
@@ -15,6 +17,5 @@ require (
 	github.com/mfridman/interpolate v0.0.2 // indirect
 	github.com/sethvargo/go-retry v0.3.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/sync v0.21.0 // indirect
 	golang.org/x/text v0.37.0 // indirect
 )
