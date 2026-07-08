@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"net"
 	"net/http"
 	"os"
@@ -13,6 +12,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/stdlib"
+	"go.uber.org/zap"
 
 	"github.com/horizoonn/factory-platform/order/internal/api/health"
 	orderapi "github.com/horizoonn/factory-platform/order/internal/api/order/v1"
@@ -22,18 +22,29 @@ import (
 	orderservice "github.com/horizoonn/factory-platform/order/internal/service/order"
 	"github.com/horizoonn/factory-platform/platform/pkg/database/postgres/migrator"
 	pgxpool "github.com/horizoonn/factory-platform/platform/pkg/database/postgres/pool/pgx"
+	"github.com/horizoonn/factory-platform/platform/pkg/logger"
 	orderopenapi "github.com/horizoonn/factory-platform/shared/pkg/openapi/order/v1"
 )
 
 func main() {
 	if err := run(); err != nil {
-		slog.Error("order service failed", "error", err)
+		logger.Error(context.Background(), "order service failed", zap.Error(err))
+		fmt.Fprintf(os.Stderr, "order service failed: %v\n", err)
 		os.Exit(1)
 	}
 }
 
 func run() error {
 	cfg := config.NewConfigMust()
+
+	if err := logger.InitWithConfig(cfg.Logger()); err != nil {
+		return fmt.Errorf("init logger: %w", err)
+	}
+	defer func() {
+		if err := logger.Sync(); err != nil {
+			logger.Warn(context.Background(), "failed to sync logger", zap.Error(err))
+		}
+	}()
 
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer cancel()
@@ -47,7 +58,7 @@ func run() error {
 	db := stdlib.OpenDBFromPool(postgresPool.Pool)
 	defer func() {
 		if err := db.Close(); err != nil {
-			slog.Warn("failed to close order migration db", "error", err)
+			logger.Warn(context.Background(), "failed to close order migration db", zap.Error(err))
 		}
 	}()
 	m := migrator.NewMigrator(db, cfg.Migrations().Dir())
@@ -61,7 +72,7 @@ func run() error {
 	}
 	defer func() {
 		if err := grpcClients.Close(); err != nil {
-			slog.Warn("failed to close grpc clients", "error", err)
+			logger.Warn(context.Background(), "failed to close grpc clients", zap.Error(err))
 		}
 	}()
 
@@ -92,7 +103,7 @@ func run() error {
 	}
 	defer func() {
 		if err := listener.Close(); err != nil && !errors.Is(err, net.ErrClosed) {
-			slog.Warn("failed to close order http listener", "error", err)
+			logger.Warn(context.Background(), "failed to close order http listener", zap.Error(err))
 		}
 	}()
 
@@ -101,7 +112,7 @@ func run() error {
 		serveErr <- httpServer.Serve(listener)
 	}()
 
-	slog.Info("order http server started", "address", cfg.OrderHTTP().Address())
+	logger.Info(ctx, "order http server started", zap.String("address", cfg.OrderHTTP().Address()))
 
 	select {
 	case err := <-serveErr:
@@ -109,7 +120,7 @@ func run() error {
 			return fmt.Errorf("serve order http: %w", err)
 		}
 	case <-ctx.Done():
-		slog.Info("shutdown signal received")
+		logger.Info(ctx, "shutdown signal received")
 	}
 
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), cfg.App().ShutdownTimeout())
@@ -119,7 +130,7 @@ func run() error {
 		return fmt.Errorf("shutdown order http server: %w", err)
 	}
 
-	slog.Info("order http server stopped gracefully")
+	logger.Info(ctx, "order http server stopped gracefully")
 
 	return nil
 }

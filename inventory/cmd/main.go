@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"net"
 	"os"
 	"os/signal"
@@ -14,6 +13,7 @@ import (
 	"buf.build/go/protovalidate"
 	protovalidatemiddleware "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/protovalidate"
 	"github.com/jackc/pgx/v5/stdlib"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	grpchealth "google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
@@ -24,18 +24,29 @@ import (
 	partservice "github.com/horizoonn/factory-platform/inventory/internal/service/part"
 	"github.com/horizoonn/factory-platform/platform/pkg/database/postgres/migrator"
 	pgxpool "github.com/horizoonn/factory-platform/platform/pkg/database/postgres/pool/pgx"
+	"github.com/horizoonn/factory-platform/platform/pkg/logger"
 	inventorypb "github.com/horizoonn/factory-platform/shared/pkg/proto/inventory/v1"
 )
 
 func main() {
 	if err := run(); err != nil {
-		slog.Error("inventory service failed", "error", err)
+		logger.Error(context.Background(), "inventory service failed", zap.Error(err))
+		fmt.Fprintf(os.Stderr, "inventory service failed: %v\n", err)
 		os.Exit(1)
 	}
 }
 
 func run() error {
 	cfg := config.NewConfigMust()
+
+	if err := logger.InitWithConfig(cfg.Logger()); err != nil {
+		return fmt.Errorf("init logger: %w", err)
+	}
+	defer func() {
+		if err := logger.Sync(); err != nil {
+			logger.Warn(context.Background(), "failed to sync logger", zap.Error(err))
+		}
+	}()
 
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer cancel()
@@ -49,7 +60,7 @@ func run() error {
 	db := stdlib.OpenDBFromPool(postgresPool.Pool)
 	defer func() {
 		if err := db.Close(); err != nil {
-			slog.Warn("failed to close inventory migration db", "error", err)
+			logger.Warn(context.Background(), "failed to close inventory migration db", zap.Error(err))
 		}
 	}()
 	m := migrator.NewMigrator(db, cfg.Migrations().Dir())
@@ -67,7 +78,7 @@ func run() error {
 	}
 	defer func() {
 		if err := listener.Close(); err != nil && !errors.Is(err, net.ErrClosed) {
-			slog.Warn("failed to close inventory grpc listener", "error", err)
+			logger.Warn(context.Background(), "failed to close inventory grpc listener", zap.Error(err))
 		}
 	}()
 
@@ -89,7 +100,7 @@ func run() error {
 		serveErr <- grpcServer.Serve(listener)
 	}()
 
-	slog.Info("inventory grpc server started", "address", cfg.InventoryGRPC().Address())
+	logger.Info(ctx, "inventory grpc server started", zap.String("address", cfg.InventoryGRPC().Address()))
 
 	select {
 	case err := <-serveErr:
@@ -97,7 +108,7 @@ func run() error {
 			return fmt.Errorf("serve inventory grpc: %w", err)
 		}
 	case <-ctx.Done():
-		slog.Info("shutdown signal received")
+		logger.Info(ctx, "shutdown signal received")
 	}
 
 	shutdownDone := make(chan struct{})
@@ -108,9 +119,9 @@ func run() error {
 
 	select {
 	case <-shutdownDone:
-		slog.Info("inventory grpc server stopped gracefully")
+		logger.Info(ctx, "inventory grpc server stopped gracefully")
 	case <-time.After(cfg.App().ShutdownTimeout()):
-		slog.Warn("graceful shutdown timeout exceeded, stopping grpc server forcefully")
+		logger.Warn(ctx, "graceful shutdown timeout exceeded, stopping grpc server forcefully")
 		grpcServer.Stop()
 	}
 

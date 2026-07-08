@@ -6,9 +6,11 @@ require (
 	buf.build/go/protovalidate v1.2.0
 	github.com/google/uuid v1.6.0
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.3
+	github.com/horizoonn/factory-platform/platform v0.0.0
 	github.com/horizoonn/factory-platform/shared v0.0.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/stretchr/testify v1.11.1
+	go.uber.org/zap v1.28.0
 	google.golang.org/grpc v1.81.0
 )
 
@@ -19,6 +21,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/google/cel-go v0.28.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/exp v0.0.0-20250813145105-42675adae3e6 // indirect
 	golang.org/x/net v0.56.0 // indirect
 	golang.org/x/sys v0.46.0 // indirect
@@ -29,4 +32,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/horizoonn/factory-platform/shared => ../shared
+replace (
+	github.com/horizoonn/factory-platform/platform => ../platform
+	github.com/horizoonn/factory-platform/shared => ../shared
+)
