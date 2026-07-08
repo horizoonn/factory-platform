@@ -1,6 +1,10 @@
 package config
 
-import "time"
+import (
+	"time"
+
+	"github.com/horizoonn/factory-platform/platform/pkg/logger"
+)
 
 type Config interface {
 	OrderHTTP() OrderHTTPConfig
@@ -8,6 +12,7 @@ type Config interface {
 	PaymentGRPC() PaymentGRPCConfig
 	Migrations() MigrationsConfig
 	App() AppConfig
+	Logger() logger.Config
 }
 
 type OrderHTTPConfig interface {

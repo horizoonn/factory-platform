@@ -1,10 +1,15 @@
 package config
 
-import "time"
+import (
+	"time"
+
+	"github.com/horizoonn/factory-platform/platform/pkg/logger"
+)
 
 type Config interface {
 	PaymentGRPC() PaymentGRPCConfig
 	App() AppConfig
+	Logger() logger.Config
 }
 
 type PaymentGRPCConfig interface {

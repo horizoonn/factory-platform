@@ -1,11 +1,16 @@
 package config
 
-import "time"
+import (
+	"time"
+
+	"github.com/horizoonn/factory-platform/platform/pkg/logger"
+)
 
 type Config interface {
 	InventoryGRPC() InventoryGRPCConfig
 	Migrations() MigrationsConfig
 	App() AppConfig
+	Logger() logger.Config
 }
 
 type InventoryGRPCConfig interface {

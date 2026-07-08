@@ -4,6 +4,8 @@ import (
 	"fmt"
 
 	"github.com/horizoonn/factory-platform/order/internal/config/env"
+	platformenv "github.com/horizoonn/factory-platform/platform/pkg/config/env"
+	"github.com/horizoonn/factory-platform/platform/pkg/logger"
 )
 
 type envConfig struct {
@@ -12,6 +14,7 @@ type envConfig struct {
 	paymentGRPC   PaymentGRPCConfig
 	migrations    MigrationsConfig
 	app           AppConfig
+	logger        logger.Config
 }
 
 func NewConfig() (Config, error) {
@@ -40,12 +43,18 @@ func NewConfig() (Config, error) {
 		return nil, fmt.Errorf("get app config: %w", err)
 	}
 
+	loggerConfig, err := platformenv.NewLoggerConfig("order")
+	if err != nil {
+		return nil, fmt.Errorf("get logger config: %w", err)
+	}
+
 	return envConfig{
 		orderHTTP:     orderHTTPConfig,
 		inventoryGRPC: inventoryGRPCConfig,
 		paymentGRPC:   paymentGRPCConfig,
 		migrations:    migrationsConfig,
 		app:           appConfig,
+		logger:        loggerConfig,
 	}, nil
 }
 
@@ -77,4 +86,8 @@ func (c envConfig) Migrations() MigrationsConfig {
 
 func (c envConfig) App() AppConfig {
 	return c.app
+}
+
+func (c envConfig) Logger() logger.Config {
+	return c.logger
 }
