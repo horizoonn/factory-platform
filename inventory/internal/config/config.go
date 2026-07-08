@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/horizoonn/factory-platform/inventory/internal/config/env"
-	platformenv "github.com/horizoonn/factory-platform/platform/pkg/config/env"
+	pgxpool "github.com/horizoonn/factory-platform/platform/pkg/database/postgres/pool/pgx"
 	"github.com/horizoonn/factory-platform/platform/pkg/logger"
 )
 
@@ -13,6 +13,7 @@ type envConfig struct {
 	migrations    MigrationsConfig
 	app           AppConfig
 	logger        logger.Config
+	postgres      pgxpool.Config
 }
 
 func NewConfig() (Config, error) {
@@ -31,9 +32,14 @@ func NewConfig() (Config, error) {
 		return nil, fmt.Errorf("get app config: %w", err)
 	}
 
-	loggerConfig, err := platformenv.NewLoggerConfig("inventory")
+	loggerConfig, err := logger.NewConfigFromEnv("inventory")
 	if err != nil {
 		return nil, fmt.Errorf("get logger config: %w", err)
+	}
+
+	postgresConfig, err := pgxpool.NewConfig()
+	if err != nil {
+		return nil, fmt.Errorf("get postgres config: %w", err)
 	}
 
 	return envConfig{
@@ -41,6 +47,7 @@ func NewConfig() (Config, error) {
 		migrations:    migrationsConfig,
 		app:           appConfig,
 		logger:        loggerConfig,
+		postgres:      postgresConfig,
 	}, nil
 }
 
@@ -68,4 +75,8 @@ func (c envConfig) App() AppConfig {
 
 func (c envConfig) Logger() logger.Config {
 	return c.logger
+}
+
+func (c envConfig) Postgres() pgxpool.Config {
+	return c.postgres
 }
