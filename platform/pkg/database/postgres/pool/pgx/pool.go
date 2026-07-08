@@ -82,3 +82,7 @@ func (p *Pool) Ping(ctx context.Context) error {
 func (p *Pool) OpTimeout() time.Duration {
 	return p.opTimeout
 }
+
+func (p *Pool) PgxPool() *pgxpool.Pool {
+	return p.Pool
+}

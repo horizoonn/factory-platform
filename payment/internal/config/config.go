@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/horizoonn/factory-platform/payment/internal/config/env"
-	platformenv "github.com/horizoonn/factory-platform/platform/pkg/config/env"
 	"github.com/horizoonn/factory-platform/platform/pkg/logger"
 )
 
@@ -25,7 +24,7 @@ func NewConfig() (Config, error) {
 		return nil, fmt.Errorf("get app config: %w", err)
 	}
 
-	loggerConfig, err := platformenv.NewLoggerConfig("payment")
+	loggerConfig, err := logger.NewConfigFromEnv("payment")
 	if err != nil {
 		return nil, fmt.Errorf("get logger config: %w", err)
 	}
