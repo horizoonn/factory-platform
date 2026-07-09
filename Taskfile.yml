@@ -126,7 +126,29 @@ tasks:
           {{.GOLANGCI_LINT}} run $mod/... --config=.golangci.yml || ERR=1
         done
         exit $ERR
-  
+
+  check:
+    desc: "Форматирование и полная локальная проверка перед коммитом"
+    cmds:
+      - task: format
+      - task: proto:lint
+      - task: lint
+      - task: test
+
+  tools:install:
+    desc: "Установка всех локальных инструментов разработки в ./bin"
+    cmds:
+      - task: install-formatters
+      - task: install-golangci-lint
+      - task: install-buf
+      - task: proto:install-plugins
+      - task: yq:install
+      - task: ogen:install
+      - task: mockery:install
+      - task: grpcurl:install
+      - task: env:install-envsubst
+      - task: install-goose
+
   install-buf:
     desc: "Установка Buf в каталог bin"
     cmds:
@@ -488,6 +510,12 @@ tasks:
     cmds:
       - |
         go run ./order/cmd
+
+  run:all:
+    desc: "Запуск всех сервисов локально: inventory, payment и order"
+    cmds:
+      - task --parallel run:inventory run:payment run:order
+
   install-goose:
     desc: "Установка goose в каталог bin"
     cmds:
@@ -728,3 +756,61 @@ tasks:
         # Передаем список сервисов в виде строки с разделителями-запятыми
         export SERVICES="{{.SERVICES}}"
         ENV_SUBST={{.ENVSUBST}} "$SCRIPT"
+
+  test-integration:
+    desc: "Запуск интеграционных тестов для указанных модулей"
+    summary: |
+      Запускает интеграционные тесты для модулей, указанных через переменную MODULES.
+      Использует тег "integration" и запускает только пакеты, где есть интеграционные тесты.
+    cmds:
+      - |
+        ERR=0
+        echo "🚀 Запуск интеграционных тестов (по тегу integration) для модулей: {{.MODULES}}"
+        for mod in {{.MODULES}}; do
+          if [ ! -d "$mod" ] || [ ! -f "$mod/go.mod" ]; then
+            echo "⚠️ Модуль $mod не найден, пропускаем"
+            continue
+          fi
+
+          echo "🧪 Проверка модуля $mod на наличие интеграционных тестов"
+          INTEGRATION_DIRS=$(find "$mod" -type f -name '*.go' -exec grep -l '^//go:build integration' {} + 2>/dev/null | sed 's#/[^/]*$##' | sort -u)
+          if [ -z "$INTEGRATION_DIRS" ]; then
+            echo "⚠️ Модуль $mod не содержит интеграционных тестов, пропускаем"
+            continue
+          fi
+
+          for dir in $INTEGRATION_DIRS; do
+            echo "▶️ Запуск интеграционных тестов для ./$dir"
+            go test -v -count=1 -tags=integration "./$dir" || ERR=1
+          done
+        done
+        exit $ERR
+
+  test-e2e:
+    desc: "Запуск E2E тестов для указанных модулей"
+    summary: |
+      Запускает E2E тесты для модулей, указанных через переменную MODULES.
+      Использует тег "e2e" и запускает только пакеты, где есть E2E тесты.
+    cmds:
+      - |
+        ERR=0
+        echo "🚀 Запуск E2E тестов (по тегу e2e) для модулей: {{.MODULES}}"
+        for mod in {{.MODULES}}; do
+          if [ ! -d "$mod" ] || [ ! -f "$mod/go.mod" ]; then
+            echo "⚠️ Модуль $mod не найден, пропускаем"
+            continue
+          fi
+
+          echo "🧪 Проверка модуля $mod на наличие E2E тестов"
+          E2E_DIRS=$(find "$mod" -type f -name '*.go' -exec grep -l '^//go:build e2e' {} + 2>/dev/null | sed 's#/[^/]*$##' | sort -u)
+          if [ -z "$E2E_DIRS" ]; then
+            echo "⚠️ Модуль $mod не содержит E2E тестов, пропускаем"
+            continue
+          fi
+
+          for dir in $E2E_DIRS; do
+            echo "▶️ Запуск E2E тестов для ./$dir"
+            go test -v -count=1 -tags=e2e "./$dir" || ERR=1
+          done
+        done
+        exit $ERR
