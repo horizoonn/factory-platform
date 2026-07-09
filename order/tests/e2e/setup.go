@@ -60,7 +60,8 @@ func setupTestEnvironment(ctx context.Context) (*TestEnvironment, error) {
 }
 
 func setupInventory(ctx context.Context, env *TestEnvironment, projectRoot string) error {
-	container, err := tcpostgres.NewContainer(ctx,
+	container, err := tcpostgres.NewContainer(
+		ctx,
 		tcpostgres.WithDatabase(inventoryPostgresDatabase),
 		tcpostgres.WithUsername(inventoryPostgresUsername),
 		tcpostgres.WithPassword(inventoryPostgresPassword),
@@ -84,7 +85,8 @@ func setupInventory(ctx context.Context, env *TestEnvironment, projectRoot strin
 	}
 	env.InventoryPool = pool
 
-	inventoryApp, err := app.NewContainer(ctx,
+	inventoryApp, err := app.NewContainer(
+		ctx,
 		app.WithName(inventoryAppName),
 		app.WithPort(inventoryGRPCPort),
 		app.WithDockerfile(projectRoot, inventoryDockerfile),
@@ -116,7 +118,8 @@ func setupInventory(ctx context.Context, env *TestEnvironment, projectRoot strin
 }
 
 func setupPayment(ctx context.Context, env *TestEnvironment, projectRoot string) error {
-	paymentApp, err := app.NewContainer(ctx,
+	paymentApp, err := app.NewContainer(
+		ctx,
 		app.WithName(paymentAppName),
 		app.WithPort(paymentGRPCPort),
 		app.WithDockerfile(projectRoot, paymentDockerfile),
@@ -143,7 +146,8 @@ func setupPayment(ctx context.Context, env *TestEnvironment, projectRoot string)
 }
 
 func setupOrder(ctx context.Context, env *TestEnvironment, projectRoot string) error {
-	container, err := tcpostgres.NewContainer(ctx,
+	container, err := tcpostgres.NewContainer(
+		ctx,
 		tcpostgres.WithDatabase(orderPostgresDatabase),
 		tcpostgres.WithUsername(orderPostgresUsername),
 		tcpostgres.WithPassword(orderPostgresPassword),
@@ -167,7 +171,8 @@ func setupOrder(ctx context.Context, env *TestEnvironment, projectRoot string) e
 	}
 	env.OrderPool = pool
 
-	orderApp, err := app.NewContainer(ctx,
+	orderApp, err := app.NewContainer(
+		ctx,
 		app.WithName(orderAppName),
 		app.WithPort(orderHTTPPort),
 		app.WithDockerfile(projectRoot, orderDockerfile),

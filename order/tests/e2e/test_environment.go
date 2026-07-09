@@ -42,7 +42,8 @@ func (env *TestEnvironment) InsertInventoryPart(t *testing.T, fixture inventoryP
 		tags = []string{}
 	}
 
-	_, err := env.InventoryPool.Exec(testContext(t), `
+	_, err := env.InventoryPool.Exec(
+		testContext(t), `
 		INSERT INTO platform.parts (
 			id, name, description, price, stock_quantity, category,
 			dimensions, manufacturer, tags, metadata, created_at, updated_at

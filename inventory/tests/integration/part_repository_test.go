@@ -236,7 +236,8 @@ func insertPart(t *testing.T, fixture partFixture) domain.Part {
 		tags = []string{}
 	}
 
-	_, err := testEnv.pool.Exec(ctx, `
+	_, err := testEnv.pool.Exec(
+		ctx, `
 		INSERT INTO platform.parts (
 			id, name, description, price, stock_quantity, category,
 			dimensions, manufacturer, tags, metadata, created_at, updated_at

@@ -41,7 +41,8 @@ func (env *TestEnvironment) InsertPart(t *testing.T, fixture partFixture) *inven
 		tags = []string{}
 	}
 
-	_, err := env.Pool.Exec(ctx, `
+	_, err := env.Pool.Exec(
+		ctx, `
 		INSERT INTO platform.parts (
 			id, name, description, price, stock_quantity, category,
 			dimensions, manufacturer, tags, metadata, created_at, updated_at

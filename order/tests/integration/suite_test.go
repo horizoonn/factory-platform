@@ -50,7 +50,8 @@ func TestMain(m *testing.M) {
 }
 
 func newEnvironment(ctx context.Context) (*environment, error) {
-	container, err := tcpostgres.NewContainer(ctx,
+	container, err := tcpostgres.NewContainer(
+		ctx,
 		tcpostgres.WithDatabase("order"),
 		tcpostgres.WithUsername("order"),
 		tcpostgres.WithPassword("order"),

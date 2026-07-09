@@ -13,7 +13,8 @@ type Network struct {
 }
 
 func NewNetwork(ctx context.Context, projectName string) (*Network, error) {
-	net, err := tcnetwork.New(ctx,
+	net, err := tcnetwork.New(
+		ctx,
 		tcnetwork.WithDriver(testcontainers.Bridge),
 		tcnetwork.WithAttachable(),
 		tcnetwork.WithLabels(map[string]string{

@@ -30,7 +30,8 @@ func setupTestEnvironment(ctx context.Context) (*TestEnvironment, error) {
 		return nil, err
 	}
 
-	generatedPostgres, err := tcpostgres.NewContainer(ctx,
+	generatedPostgres, err := tcpostgres.NewContainer(
+		ctx,
 		tcpostgres.WithDatabase(postgresDatabase),
 		tcpostgres.WithUsername(postgresUsername),
 		tcpostgres.WithPassword(postgresPassword),
@@ -67,7 +68,8 @@ func setupTestEnvironment(ctx context.Context) (*TestEnvironment, error) {
 		}, err)
 	}
 
-	appContainer, err := app.NewContainer(ctx,
+	appContainer, err := app.NewContainer(
+		ctx,
 		app.WithName(inventoryAppName),
 		app.WithPort(inventoryGRPCPort),
 		app.WithDockerfile(projectRoot, inventoryDockerfile),
