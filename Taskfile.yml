@@ -41,13 +41,15 @@ vars:
   COVERAGE_FILE: total.out
 
   COMPOSE_NETWORK: microservices-net
+  CORE_ENV_FILE: '{{.ROOT_DIR}}/deploy/compose/core/.env'
   INVENTORY_ENV_FILE: '{{.ROOT_DIR}}/deploy/env/inventory.env'
   ORDER_ENV_FILE: '{{.ROOT_DIR}}/deploy/env/order.env'
+  CORE_COMPOSE_FILE: '{{.ROOT_DIR}}/deploy/compose/core/docker-compose.yml'
   INVENTORY_COMPOSE_FILE: '{{.ROOT_DIR}}/deploy/compose/inventory/docker-compose.yaml'
   ORDER_COMPOSE_FILE: '{{.ROOT_DIR}}/deploy/compose/order/docker-compose.yaml'
 
   MODULES: assembly inventory order payment platform iam notification shared
-  SERVICES: inventory,order,payment
+  SERVICES: core,inventory,order,payment
 
 tasks:
   install-formatters:
@@ -413,6 +415,30 @@ tasks:
       - |
         docker network inspect {{.COMPOSE_NETWORK}} >/dev/null 2>&1 || docker network create {{.COMPOSE_NETWORK}}
 
+  compose:up:core:
+    desc: "Запуск core-инфраструктуры: Kafka и Kafka UI"
+    deps: [infra:network]
+    preconditions:
+      - sh: test -f {{.CORE_ENV_FILE}}
+        msg: "Создай deploy/compose/core/.env через task env:generate"
+      - sh: test -f {{.CORE_COMPOSE_FILE}}
+        msg: "Не найден {{.CORE_COMPOSE_FILE}}"
+    cmds:
+      - |
+        docker compose --env-file {{.CORE_ENV_FILE}} -f {{.CORE_COMPOSE_FILE}} config --quiet
+        docker compose --env-file {{.CORE_ENV_FILE}} -f {{.CORE_COMPOSE_FILE}} up -d --wait
+
+  compose:down:core:
+    desc: "Остановка core-инфраструктуры"
+    preconditions:
+      - sh: test -f {{.CORE_ENV_FILE}}
+        msg: "Создай deploy/compose/core/.env через task env:generate"
+      - sh: test -f {{.CORE_COMPOSE_FILE}}
+        msg: "Не найден {{.CORE_COMPOSE_FILE}}"
+    cmds:
+      - |
+        docker compose --env-file {{.CORE_ENV_FILE}} -f {{.CORE_COMPOSE_FILE}} down
+
   compose:up:inventory:
     desc: "Запуск Postgres для InventoryService"
     deps: [infra:network]
@@ -462,8 +488,9 @@ tasks:
         docker compose --env-file {{.ORDER_ENV_FILE}} -f {{.ORDER_COMPOSE_FILE}} down
 
   env:up:
-    desc: "Запуск локальной инфраструктуры: inventory DB и order DB"
+    desc: "Запуск локальной инфраструктуры: Kafka, inventory DB и order DB"
     cmds:
+      - task: compose:up:core
       - task: compose:up:inventory
       - task: compose:up:order
 
@@ -472,6 +499,7 @@ tasks:
     cmds:
       - task: compose:down:order
       - task: compose:down:inventory
+      - task: compose:down:core
 
   env:bootstrap:
     desc: "Подготовка локального окружения: infra up и миграции"
