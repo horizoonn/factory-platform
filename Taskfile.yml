@@ -42,14 +42,16 @@ vars:
 
   COMPOSE_NETWORK: microservices-net
   CORE_ENV_FILE: '{{.ROOT_DIR}}/deploy/compose/core/.env'
+  ASSEMBLY_ENV_FILE: '{{.ROOT_DIR}}/deploy/env/assembly.env'
   INVENTORY_ENV_FILE: '{{.ROOT_DIR}}/deploy/env/inventory.env'
   ORDER_ENV_FILE: '{{.ROOT_DIR}}/deploy/env/order.env'
   CORE_COMPOSE_FILE: '{{.ROOT_DIR}}/deploy/compose/core/docker-compose.yml'
+  ASSEMBLY_COMPOSE_FILE: '{{.ROOT_DIR}}/deploy/compose/assembly/docker-compose.yaml'
   INVENTORY_COMPOSE_FILE: '{{.ROOT_DIR}}/deploy/compose/inventory/docker-compose.yaml'
   ORDER_COMPOSE_FILE: '{{.ROOT_DIR}}/deploy/compose/order/docker-compose.yaml'
 
   MODULES: assembly inventory order payment platform iam notification shared
-  SERVICES: core,inventory,order,payment
+  SERVICES: core,assembly,inventory,order,payment
 
 tasks:
   install-formatters:
@@ -439,6 +441,30 @@ tasks:
       - |
         docker compose --env-file {{.CORE_ENV_FILE}} -f {{.CORE_COMPOSE_FILE}} down
 
+  compose:up:assembly:
+    desc: "Запуск Postgres для AssemblyService"
+    deps: [infra:network]
+    preconditions:
+      - sh: test -f {{.ASSEMBLY_ENV_FILE}}
+        msg: "Создай deploy/env/assembly.env через task env:generate"
+      - sh: test -f {{.ASSEMBLY_COMPOSE_FILE}}
+        msg: "Не найден {{.ASSEMBLY_COMPOSE_FILE}}"
+    cmds:
+      - |
+        docker compose --env-file {{.ASSEMBLY_ENV_FILE}} -f {{.ASSEMBLY_COMPOSE_FILE}} config --quiet
+        docker compose --env-file {{.ASSEMBLY_ENV_FILE}} -f {{.ASSEMBLY_COMPOSE_FILE}} up -d --wait
+
+  compose:down:assembly:
+    desc: "Остановка Postgres для AssemblyService"
+    preconditions:
+      - sh: test -f {{.ASSEMBLY_ENV_FILE}}
+        msg: "Создай deploy/env/assembly.env через task env:generate"
+      - sh: test -f {{.ASSEMBLY_COMPOSE_FILE}}
+        msg: "Не найден {{.ASSEMBLY_COMPOSE_FILE}}"
+    cmds:
+      - |
+        docker compose --env-file {{.ASSEMBLY_ENV_FILE}} -f {{.ASSEMBLY_COMPOSE_FILE}} down
+
   compose:up:inventory:
     desc: "Запуск Postgres для InventoryService"
     deps: [infra:network]
@@ -488,9 +514,10 @@ tasks:
         docker compose --env-file {{.ORDER_ENV_FILE}} -f {{.ORDER_COMPOSE_FILE}} down
 
   env:up:
-    desc: "Запуск локальной инфраструктуры: Kafka, inventory DB и order DB"
+    desc: "Запуск локальной инфраструктуры: Kafka и локальные БД"
     cmds:
       - task: compose:up:core
+      - task: compose:up:assembly
       - task: compose:up:inventory
       - task: compose:up:order
 
@@ -499,6 +526,7 @@ tasks:
     cmds:
       - task: compose:down:order
       - task: compose:down:inventory
+      - task: compose:down:assembly
       - task: compose:down:core
 
   env:bootstrap:
@@ -518,6 +546,16 @@ tasks:
     cmds:
       - |
         go run ./inventory/cmd
+
+  run:assembly:
+    desc: "Запуск AssemblyService локально"
+    dotenv: ['deploy/env/assembly.env']
+    preconditions:
+      - sh: test -f deploy/env/assembly.env
+        msg: "Создай deploy/env/assembly.env через task env:generate"
+    cmds:
+      - |
+        go run ./assembly/cmd
 
   run:payment:
     desc: "Запуск PaymentService локально"
@@ -540,9 +578,9 @@ tasks:
         go run ./order/cmd
 
   run:all:
-    desc: "Запуск всех сервисов локально: inventory, payment и order"
+    desc: "Запуск всех сервисов локально"
     cmds:
-      - task --parallel run:inventory run:payment run:order
+      - task --parallel run:assembly run:inventory run:payment run:order
 
   install-goose:
     desc: "Установка goose в каталог bin"
@@ -567,6 +605,45 @@ tasks:
         {{.GOOSE}} -dir inventory/migrations postgres \
           "host=$POSTGRES_HOST port=$POSTGRES_PORT user=$POSTGRES_USER password=$POSTGRES_PASSWORD dbname=$POSTGRES_DB sslmode=$POSTGRES_SSL_MODE" \
           up
+
+  db:migrate:assembly:
+    desc: "Запуск миграций assembly"
+    deps: [install-goose]
+    dotenv: ['deploy/env/assembly.env']
+    preconditions:
+      - sh: test -f deploy/env/assembly.env
+        msg: "Создай deploy/env/assembly.env через task env:generate"
+    cmds:
+      - |
+        {{.GOOSE}} -dir assembly/migrations postgres \
+          "host=$POSTGRES_HOST port=$POSTGRES_PORT user=$POSTGRES_USER password=$POSTGRES_PASSWORD dbname=$POSTGRES_DB sslmode=$POSTGRES_SSL_MODE" \
+          up
+
+  db:status:assembly:
+    desc: "Статус миграций assembly"
+    deps: [install-goose]
+    dotenv: ['deploy/env/assembly.env']
+    preconditions:
+      - sh: test -f deploy/env/assembly.env
+        msg: "Создай deploy/env/assembly.env через task env:generate"
+    cmds:
+      - |
+        {{.GOOSE}} -dir assembly/migrations postgres \
+          "host=$POSTGRES_HOST port=$POSTGRES_PORT user=$POSTGRES_USER password=$POSTGRES_PASSWORD dbname=$POSTGRES_DB sslmode=$POSTGRES_SSL_MODE" \
+          status
+
+  db:rollback:assembly:
+    desc: "Откат последней миграции assembly"
+    deps: [install-goose]
+    dotenv: ['deploy/env/assembly.env']
+    preconditions:
+      - sh: test -f deploy/env/assembly.env
+        msg: "Создай deploy/env/assembly.env через task env:generate"
+    cmds:
+      - |
+        {{.GOOSE}} -dir assembly/migrations postgres \
+          "host=$POSTGRES_HOST port=$POSTGRES_PORT user=$POSTGRES_USER password=$POSTGRES_PASSWORD dbname=$POSTGRES_DB sslmode=$POSTGRES_SSL_MODE" \
+          down
 
   db:status:inventory:
     desc: "Статус миграций inventory"
@@ -611,6 +688,7 @@ tasks:
     desc: "Запуск миграций всех локальных БД"
     aliases: [db:migrate]
     cmds:
+      - task: db:migrate:assembly
       - task: db:migrate:inventory
       - task: db:migrate:order
 
