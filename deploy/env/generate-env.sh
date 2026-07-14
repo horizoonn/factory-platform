@@ -29,7 +29,9 @@ set +a
 process_template() {
   local service=$1
   local template="$TEMPLATE_DIR/${service}.env.template"
-  local output="$TEMPLATE_DIR/${service}.env"
+  local env_output="$TEMPLATE_DIR/${service}.env"
+  local compose_dir="$SCRIPT_DIR/../compose/${service}"
+  local compose_output="$compose_dir/.env"
   
   echo "Обработка шаблона для сервиса $service..."
   
@@ -39,9 +41,13 @@ process_template() {
   fi
   
   # Используем envsubst для замены переменных в шаблоне
-  $ENV_SUBST < "$template" > "$output"
+  $ENV_SUBST < "$template" > "$env_output"
+  echo "✅ Создан файл $env_output"
   
-  echo "✅ Создан файл $output"
+  if [ -d "$compose_dir" ]; then
+    $ENV_SUBST < "$template" > "$compose_output"
+    echo "✅ Создан файл $compose_output"
+  fi
 }
 
 # Определяем список сервисов из переменной окружения

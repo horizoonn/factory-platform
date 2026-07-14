@@ -154,7 +154,8 @@ func insertOrder(t *testing.T, order domain.Order) domain.Order {
 	createdAt := time.Now().UTC().Truncate(time.Microsecond)
 	updatedAt := createdAt
 
-	_, err := testEnv.pool.Exec(testContext(t), `
+	_, err := testEnv.pool.Exec(
+		testContext(t), `
 		INSERT INTO platform.orders (
 			id, user_id, part_ids, total_price,
 			transaction_id, payment_method, status, created_at, updated_at
@@ -179,7 +180,7 @@ func insertOrder(t *testing.T, order domain.Order) domain.Order {
 	return order
 }
 
-func assertOrder(t *testing.T, expected domain.Order, actual domain.Order) {
+func assertOrder(t *testing.T, expected, actual domain.Order) {
 	t.Helper()
 
 	assert.Equal(t, expected.ID, actual.ID)
