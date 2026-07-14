@@ -11,6 +11,28 @@ template-data:
   unroll-variadic: true
 
 packages:
+  github.com/horizoonn/factory-platform/assembly/internal/service/assembly:
+    config:
+      dir: "assembly/internal/service/mocks"
+      filename: "mock_assembly_service.go"
+    interfaces:
+      ShipAssembledOutbox:
+
+  github.com/horizoonn/factory-platform/assembly/internal/api/kafka/orderpaid:
+    config:
+      dir: "assembly/internal/service/mocks"
+      filename: "mock_order_paid_handler.go"
+    interfaces:
+      AssemblyService:
+
+  github.com/horizoonn/factory-platform/assembly/internal/outbox/dispatcher:
+    config:
+      dir: "assembly/internal/service/mocks"
+      filename: "mock_outbox_dispatcher.go"
+    interfaces:
+      Repository:
+      Producer:
+
   github.com/horizoonn/factory-platform/order/internal/service/order:
     config:
       dir: "order/internal/service/mocks"
