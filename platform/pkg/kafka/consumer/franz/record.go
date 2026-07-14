@@ -6,12 +6,14 @@ import (
 	"github.com/horizoonn/factory-platform/platform/pkg/kafka"
 )
 
-func fromKgoRecord(record *kgo.Record) kafka.Message {
-	return kafka.Message{
+func fromKgoRecord(record *kgo.Record) kafka.Record {
+	return kafka.Record{
+		Message: kafka.Message{
+			Key:     record.Key,
+			Value:   record.Value,
+			Headers: fromKgoHeaders(record.Headers),
+		},
 		Topic:     record.Topic,
-		Key:       record.Key,
-		Value:     record.Value,
-		Headers:   fromKgoHeaders(record.Headers),
 		Timestamp: record.Timestamp,
 		Partition: record.Partition,
 		Offset:    record.Offset,

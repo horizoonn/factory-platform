@@ -75,12 +75,31 @@ func (c *Consumer) Consume(ctx context.Context, handler consumer.Handler) error 
 	}
 }
 
-func (c *Consumer) Close() {
-	if c == nil || c.client == nil {
-		return
+func (c *Consumer) Ping(ctx context.Context) error {
+	if err := c.client.Ping(ctx); err != nil {
+		return fmt.Errorf("ping kafka consumer: %w", err)
 	}
 
-	c.client.CloseAllowingRebalance()
+	return nil
+}
+
+func (c *Consumer) Close(ctx context.Context) error {
+	if c == nil || c.client == nil {
+		return nil
+	}
+
+	closed := make(chan struct{})
+	go func() {
+		c.client.CloseAllowingRebalance()
+		close(closed)
+	}()
+
+	select {
+	case <-closed:
+		return nil
+	case <-ctx.Done():
+		return fmt.Errorf("close kafka consumer: %w", ctx.Err())
+	}
 }
 
 func (c *Consumer) pollAndHandle(ctx context.Context, handler consumer.Handler) error {
@@ -109,6 +128,19 @@ func (c *Consumer) pollAndHandle(ctx context.Context, handler consumer.Handler) 
 
 		msg := fromKgoRecord(record)
 		if err := handler.Handle(ctx, msg); err != nil {
+			if consumer.IsPermanent(err) {
+				c.logger.Error(
+					ctx, "skip permanently invalid kafka message",
+					zap.String("topic", record.Topic),
+					zap.Int32("partition", record.Partition),
+					zap.Int64("offset", record.Offset),
+					zap.Error(err),
+				)
+				processed = append(processed, record)
+
+				return
+			}
+
 			handleErr = fmt.Errorf(
 				"handle kafka message topic=%s partition=%d offset=%d: %w",
 				record.Topic,

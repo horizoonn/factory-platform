@@ -10,13 +10,16 @@ type Header struct {
 }
 
 type Message struct {
-	Topic   string
 	Key     []byte
 	Value   []byte
 	Headers []Header
+}
 
+type Record struct {
+	Message
+
+	Topic     string
 	Timestamp time.Time
-
 	Partition int32
 	Offset    int64
 }

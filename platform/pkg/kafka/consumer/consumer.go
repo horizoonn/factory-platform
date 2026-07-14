@@ -11,13 +11,13 @@ type Consumer interface {
 }
 
 type Handler interface {
-	Handle(ctx context.Context, msg kafka.Message) error
+	Handle(ctx context.Context, record kafka.Record) error
 }
 
-type HandlerFunc func(ctx context.Context, msg kafka.Message) error
+type HandlerFunc func(ctx context.Context, record kafka.Record) error
 
-func (f HandlerFunc) Handle(ctx context.Context, msg kafka.Message) error {
-	return f(ctx, msg)
+func (f HandlerFunc) Handle(ctx context.Context, record kafka.Record) error {
+	return f(ctx, record)
 }
 
 type Middleware func(Handler) Handler

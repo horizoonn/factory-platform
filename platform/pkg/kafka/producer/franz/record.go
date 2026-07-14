@@ -6,13 +6,12 @@ import (
 	"github.com/horizoonn/factory-platform/platform/pkg/kafka"
 )
 
-func toKgoRecord(msg kafka.Message) *kgo.Record {
+func toKgoRecord(topic string, msg kafka.Message) *kgo.Record {
 	return &kgo.Record{
-		Topic:     msg.Topic,
-		Key:       msg.Key,
-		Value:     msg.Value,
-		Headers:   toKgoHeaders(msg.Headers),
-		Timestamp: msg.Timestamp,
+		Topic:   topic,
+		Key:     msg.Key,
+		Value:   msg.Value,
+		Headers: toKgoHeaders(msg.Headers),
 	}
 }
 

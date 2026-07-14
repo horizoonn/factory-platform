@@ -2,8 +2,8 @@ package franz
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/twmb/franz-go/pkg/kgo"
 
@@ -12,8 +12,7 @@ import (
 )
 
 type Producer struct {
-	client       *kgo.Client
-	defaultTopic string
+	client *kgo.Client
 }
 
 func NewProducer(config Config) (*Producer, error) {
@@ -23,12 +22,11 @@ func NewProducer(config Config) (*Producer, error) {
 
 	opts := []kgo.Opt{
 		kgo.SeedBrokers(config.Brokers...),
+		kgo.RecordDeliveryTimeout(config.deliveryTimeout()),
+		kgo.AllowIdempotentProduceCancellation(),
 	}
 	if config.ClientID != "" {
 		opts = append(opts, kgo.ClientID(config.ClientID))
-	}
-	if config.DefaultTopic != "" {
-		opts = append(opts, kgo.DefaultProduceTopic(config.DefaultTopic))
 	}
 
 	client, err := kgo.NewClient(opts...)
@@ -36,18 +34,23 @@ func NewProducer(config Config) (*Producer, error) {
 		return nil, fmt.Errorf("create kafka producer client: %w", err)
 	}
 
-	return &Producer{
-		client:       client,
-		defaultTopic: config.DefaultTopic,
-	}, nil
+	return &Producer{client: client}, nil
 }
 
-func (p *Producer) Publish(ctx context.Context, msg kafka.Message) error {
-	if err := p.validateMessage(msg); err != nil {
-		return err
+func (p *Producer) Ping(ctx context.Context) error {
+	if err := p.client.Ping(ctx); err != nil {
+		return fmt.Errorf("ping kafka producer: %w", err)
 	}
 
-	record := toKgoRecord(msg)
+	return nil
+}
+
+func (p *Producer) Publish(ctx context.Context, topic string, msg kafka.Message) error {
+	if strings.TrimSpace(topic) == "" {
+		return producer.ErrTopicRequired
+	}
+
+	record := toKgoRecord(topic, msg)
 	if err := p.client.ProduceSync(ctx, record).FirstErr(); err != nil {
 		return fmt.Errorf("produce kafka message: %w", err)
 	}
@@ -55,35 +58,19 @@ func (p *Producer) Publish(ctx context.Context, msg kafka.Message) error {
 	return nil
 }
 
-func (p *Producer) PublishJSON(ctx context.Context, msg kafka.Message, payload any) error {
-	value, err := json.Marshal(payload)
-	if err != nil {
-		return fmt.Errorf("marshal kafka json payload: %w", err)
-	}
-
-	msg.Value = value
-
-	return p.Publish(ctx, msg)
-}
-
-func (p *Producer) Send(ctx context.Context, key, value []byte) error {
-	return p.Publish(ctx, kafka.Message{
-		Key:   key,
-		Value: value,
-	})
-}
-
-func (p *Producer) Close() {
+func (p *Producer) Close(ctx context.Context) error {
 	if p == nil || p.client == nil {
-		return
+		return nil
 	}
 
+	err := p.client.Flush(ctx)
+	if err != nil {
+		// The client is being discarded; abort keeps shutdown within its deadline.
+		p.client.UnsafeAbortBufferedRecords()
+	}
 	p.client.Close()
-}
-
-func (p *Producer) validateMessage(msg kafka.Message) error {
-	if msg.Topic == "" && p.defaultTopic == "" {
-		return producer.ErrTopicRequired
+	if err != nil {
+		return fmt.Errorf("flush kafka producer: %w", err)
 	}
 
 	return nil
