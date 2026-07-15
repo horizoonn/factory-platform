@@ -7,6 +7,16 @@ import "time"
 const (
 	projectName = "order-e2e"
 
+	kafkaName           = "order-e2e-kafka"
+	kafkaAlias          = "kafka-order-e2e"
+	kafkaImage          = "confluentinc/cp-kafka:8.3.0"
+	kafkaBrokerPort     = "29092"
+	kafkaControllerPort = "29093"
+	kafkaClusterID      = "Mk3OEYBSD34fcwNTJENDM2Qk"
+
+	orderPaidTopic     = "order.paid.v1"
+	shipAssembledTopic = "assembly.ship-assembled.v1"
+
 	inventoryPostgresAlias    = "postgres-inventory-order-e2e"
 	inventoryPostgresDatabase = "inventory"
 	inventoryPostgresUsername = "inventory"
@@ -17,6 +27,11 @@ const (
 	orderPostgresUsername = "order"
 	orderPostgresPassword = "order"
 
+	assemblyPostgresAlias    = "postgres-assembly-order-e2e"
+	assemblyPostgresDatabase = "assembly"
+	assemblyPostgresUsername = "assembly"
+	assemblyPostgresPassword = "assembly"
+
 	inventoryAppName    = "order-e2e-inventory-app"
 	inventoryDockerfile = "deploy/docker/inventory/Dockerfile"
 	inventoryGRPCPort   = "50051"
@@ -24,6 +39,9 @@ const (
 	paymentAppName    = "order-e2e-payment-app"
 	paymentDockerfile = "deploy/docker/payment/Dockerfile"
 	paymentGRPCPort   = "50052"
+
+	assemblyAppName    = "order-e2e-assembly-app"
+	assemblyDockerfile = "deploy/docker/assembly/Dockerfile"
 
 	orderAppName    = "order-e2e-order-app"
 	orderDockerfile = "deploy/docker/order/Dockerfile"

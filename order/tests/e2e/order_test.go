@@ -4,6 +4,7 @@ package e2e
 
 import (
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -12,7 +13,7 @@ import (
 	orderopenapi "github.com/horizoonn/factory-platform/shared/pkg/openapi/order/v1"
 )
 
-func TestOrderService_CreateGetPayOrder(t *testing.T) {
+func TestOrderService_CreateGetPayCompleteOrder(t *testing.T) {
 	env := requireTestEnv(t)
 	env.ClearData(t)
 
@@ -65,6 +66,18 @@ func TestOrderService_CreateGetPayOrder(t *testing.T) {
 	assert.Equal(t, orderopenapi.OrderStatusPAID, paidOrder.Status)
 	assert.Equal(t, paid.TransactionUUID, paidOrder.TransactionUUID.Value)
 	assert.Equal(t, orderopenapi.PaymentMethodCARD, paidOrder.PaymentMethod.Value)
+
+	require.Eventually(t, func() bool {
+		res, err := client.GetOrder(testContext(t), orderopenapi.GetOrderParams{
+			OrderUUID: created.OrderUUID,
+		})
+		if err != nil {
+			return false
+		}
+
+		completedOrder, ok := res.(*orderopenapi.OrderDto)
+		return ok && completedOrder.Status == orderopenapi.OrderStatusCOMPLETED
+	}, 30*time.Second, 250*time.Millisecond)
 }
 
 func TestOrderService_CancelOrder(t *testing.T) {
