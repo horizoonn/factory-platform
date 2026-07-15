@@ -18,6 +18,7 @@ type envConfig struct {
 	postgres              pgxpool.Config
 	orderPaidConsumer     consumerfranz.Config
 	shipAssembledProducer producerfranz.Config
+	shipAssembledTopic    string
 	outboxDispatcher      outboxdispatcher.Config
 }
 
@@ -52,7 +53,7 @@ func NewConfig() (Config, error) {
 		return nil, fmt.Errorf("get order paid consumer config: %w", err)
 	}
 
-	shipAssembledProducerConfig, err := env.NewShipAssembledProducerConfig(brokers)
+	shipAssembledProducerConfig, shipAssembledTopic, err := env.NewShipAssembledProducerConfig(brokers)
 	if err != nil {
 		return nil, fmt.Errorf("get ship assembled producer config: %w", err)
 	}
@@ -76,6 +77,7 @@ func NewConfig() (Config, error) {
 		postgres:              postgresConfig,
 		orderPaidConsumer:     orderPaidConsumerConfig,
 		shipAssembledProducer: shipAssembledProducerConfig,
+		shipAssembledTopic:    shipAssembledTopic,
 		outboxDispatcher:      outboxDispatcherConfig,
 	}, nil
 }
@@ -112,6 +114,10 @@ func (c envConfig) OrderPaidConsumer() consumerfranz.Config {
 
 func (c envConfig) ShipAssembledProducer() producerfranz.Config {
 	return c.shipAssembledProducer
+}
+
+func (c envConfig) ShipAssembledTopic() string {
+	return c.shipAssembledTopic
 }
 
 func (c envConfig) OutboxDispatcher() outboxdispatcher.Config {

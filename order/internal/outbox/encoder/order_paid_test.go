@@ -14,6 +14,8 @@ import (
 )
 
 func TestOrderPaid_Encode(t *testing.T) {
+	const topic = "order.paid.v1"
+
 	event := domain.OrderPaidEvent{
 		ID:            uuid.New(),
 		OrderID:       uuid.New(),
@@ -23,12 +25,12 @@ func TestOrderPaid_Encode(t *testing.T) {
 		OccurredAt:    time.Date(2026, 7, 14, 12, 0, 0, 0, time.UTC),
 	}
 
-	encoded, err := NewOrderPaid().Encode(event)
+	encoded, err := NewOrderPaid(topic).Encode(event)
 	require.NoError(t, err)
 	assert.Equal(t, event.ID, encoded.ID)
 	assert.Equal(t, event.OrderID, encoded.AggregateID)
 	assert.Equal(t, orderPaidType, encoded.Type)
-	assert.Equal(t, orderPaidTopic, encoded.Topic)
+	assert.Equal(t, topic, encoded.Topic)
 	assert.Equal(t, []byte(event.OrderID.String()), encoded.Key)
 	assert.Equal(t, map[string]string{"event-type": orderPaidType}, encoded.Headers)
 	assert.Equal(t, event.OccurredAt, encoded.AvailableAt)
@@ -54,6 +56,6 @@ func TestOrderPaid_Encode_InvalidTimestamp(t *testing.T) {
 		OccurredAt:    time.Date(10000, 1, 1, 0, 0, 0, 0, time.UTC),
 	}
 
-	_, err := NewOrderPaid().Encode(event)
+	_, err := NewOrderPaid("order.paid.v1").Encode(event)
 	require.Error(t, err)
 }
