@@ -12,14 +12,15 @@ import (
 )
 
 const (
-	orderPaidTopic = "order.paid.v1"
-	orderPaidType  = "events.v1.OrderPaid"
+	orderPaidType = "events.v1.OrderPaid"
 )
 
-type OrderPaid struct{}
+type OrderPaid struct {
+	topic string
+}
 
-func NewOrderPaid() *OrderPaid {
-	return &OrderPaid{}
+func NewOrderPaid(topic string) *OrderPaid {
+	return &OrderPaid{topic: topic}
 }
 
 func (e *OrderPaid) Encode(event domain.OrderPaidEvent) (outbox.Event, error) {
@@ -44,7 +45,7 @@ func (e *OrderPaid) Encode(event domain.OrderPaidEvent) (outbox.Event, error) {
 		ID:          event.ID,
 		AggregateID: event.OrderID,
 		Type:        orderPaidType,
-		Topic:       orderPaidTopic,
+		Topic:       e.topic,
 		Key:         []byte(event.OrderID.String()),
 		Payload:     payload,
 		Headers:     map[string]string{"event-type": orderPaidType},

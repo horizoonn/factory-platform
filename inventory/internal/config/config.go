@@ -10,6 +10,7 @@ import (
 
 type envConfig struct {
 	inventoryGRPC InventoryGRPCConfig
+	inventoryHTTP InventoryHTTPConfig
 	migrations    MigrationsConfig
 	app           AppConfig
 	logger        logger.Config
@@ -20,6 +21,11 @@ func NewConfig() (Config, error) {
 	inventoryGRPCConfig, err := env.NewInventoryGRPCConfig()
 	if err != nil {
 		return nil, fmt.Errorf("get inventory grpc config: %w", err)
+	}
+
+	inventoryHTTPConfig, err := env.NewInventoryHTTPConfig()
+	if err != nil {
+		return nil, fmt.Errorf("get inventory http config: %w", err)
 	}
 
 	migrationsConfig, err := env.NewMigrationsConfig()
@@ -44,6 +50,7 @@ func NewConfig() (Config, error) {
 
 	return envConfig{
 		inventoryGRPC: inventoryGRPCConfig,
+		inventoryHTTP: inventoryHTTPConfig,
 		migrations:    migrationsConfig,
 		app:           appConfig,
 		logger:        loggerConfig,
@@ -63,6 +70,10 @@ func NewConfigMust() Config {
 
 func (c envConfig) InventoryGRPC() InventoryGRPCConfig {
 	return c.inventoryGRPC
+}
+
+func (c envConfig) InventoryHTTP() InventoryHTTPConfig {
+	return c.inventoryHTTP
 }
 
 func (c envConfig) Migrations() MigrationsConfig {

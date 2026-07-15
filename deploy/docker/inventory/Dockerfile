@@ -38,9 +38,11 @@ COPY --from=builder /out/grpc-health-probe /bin/grpc-health-probe
 
 ENV INVENTORY_GRPC_HOST=0.0.0.0 \
     INVENTORY_GRPC_PORT=50051 \
+    INVENTORY_HTTP_HOST=0.0.0.0 \
+    INVENTORY_HTTP_PORT=8082 \
     INVENTORY_MIGRATIONS_DIR=/app/migrations
 
-EXPOSE 50051
+EXPOSE 50051 8082
 
 USER appuser
 

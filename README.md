@@ -24,35 +24,54 @@
 ## Архитектура
 
 ```mermaid
-flowchart LR
-    Client[HTTP client]
+flowchart TB
+    Client([Client])
 
-    subgraph Services
+    subgraph Sync["Синхронное взаимодействие"]
+        direction LR
         Order[OrderService]
         Inventory[InventoryService]
         Payment[PaymentService]
+
+        Order -->|gRPC: ListParts| Inventory
+        Order -->|gRPC: PayOrder| Payment
+    end
+
+    Client -->|HTTP: заказы| Order
+    Client -->|HTTP / gRPC: каталог деталей| Inventory
+
+    Order -->|orders, outbox, inbox| OrderDB[(Order PostgreSQL)]
+    Inventory -->|parts| InventoryDB[(Inventory PostgreSQL)]
+
+    subgraph Async["Асинхронный цикл сборки"]
+        direction LR
+        OrderDispatcher[Outbox dispatcher]
+        Kafka[(Kafka)]
         Assembly[AssemblyService]
+        AssemblyDB[(Assembly PostgreSQL<br/>delayed outbox)]
+        AssemblyDispatcher[Delayed outbox dispatcher]
+
+        OrderDispatcher -.->|publish: order.paid.v1| Kafka
+        Kafka -.->|OrderPaid| Assembly
+        Assembly -->|schedule assembly| AssemblyDB
+        AssemblyDB --> AssemblyDispatcher
+        AssemblyDispatcher -.->|publish: assembly.ship-assembled.v1| Kafka
+        Kafka -.->|ShipAssembled| Order
     end
 
-    subgraph Storage
-        OrderDB[(Order PostgreSQL)]
-        InventoryDB[(Inventory PostgreSQL)]
-        AssemblyDB[(Assembly PostgreSQL)]
-    end
+    OrderDB -.->|claim pending events| OrderDispatcher
 
-    Kafka[(Kafka)]
+    classDef external fill:#f8fafc,stroke:#475569,stroke-width:2px,color:#0f172a;
+    classDef service fill:#dbeafe,stroke:#2563eb,stroke-width:2px,color:#172554;
+    classDef storage fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#052e16;
+    classDef broker fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#451a03;
+    classDef worker fill:#f3e8ff,stroke:#9333ea,stroke-width:2px,color:#3b0764;
 
-    Client -->|HTTP REST| Order
-    Order -->|gRPC ListParts| Inventory
-    Order -->|gRPC PayOrder| Payment
-    Inventory --> InventoryDB
-    Order --> OrderDB
-    Assembly --> AssemblyDB
-
-    OrderDB -->|outbox dispatcher| Kafka
-    Kafka -->|OrderPaid| Assembly
-    AssemblyDB -->|delayed outbox dispatcher| Kafka
-    Kafka -->|ShipAssembled| Order
+    class Client external;
+    class Order,Inventory,Payment,Assembly service;
+    class OrderDB,InventoryDB,AssemblyDB storage;
+    class Kafka broker;
+    class OrderDispatcher,AssemblyDispatcher worker;
 ```
 
 ### Сервисы
@@ -60,7 +79,7 @@ flowchart LR
 | Компонент | Интерфейс | Назначение | Хранилище |
 | --- | --- | --- | --- |
 | `order` | HTTP `:8080`, Kafka producer/consumer | Управляет жизненным циклом заказа и координирует оплату | PostgreSQL `:5434` |
-| `inventory` | gRPC `:50051` | Хранит детали, фильтрует их и возвращает цены | PostgreSQL `:5433` |
+| `inventory` | HTTP `:8082`, gRPC `:50051` | Хранит детали, фильтрует их и возвращает цены | PostgreSQL `:5433` |
 | `payment` | gRPC `:50052` | Регистрирует оплату и создаёт UUID транзакции | — |
 | `assembly` | Kafka consumer/producer | Планирует сборку оплаченного корабля и публикует результат | PostgreSQL `:5435` |
 | `platform` | Go packages | Общие адаптеры PostgreSQL, Kafka, логирования и тестовой инфраструктуры | — |
@@ -172,7 +191,7 @@ internal/
 - Docker с Compose plugin;
 - [Task](https://taskfile.dev/);
 - Git;
-- свободные порты `8080`, `8081`, `50051`, `50052`, `5433`–`5435` и `9092`.
+- свободные порты `8080`–`8082`, `50051`, `50052`, `5433`–`5435` и `9092`.
 
 Для генерации OpenAPI-кода также нужны Node.js и npm. Команда `task test-api` использует `curl` и `uuidgen`.
 
@@ -192,19 +211,34 @@ task env:bootstrap
 task run:all
 ```
 
+Чтобы собрать и запустить инфраструктуру и все четыре сервиса в Docker:
+
+```bash
+task env:generate
+task deploy:up
+```
+
+Контейнеры приложений самостоятельно применяют миграции при старте. Внутри
+Docker-сети сервисы обращаются к Kafka и друг к другу по именам контейнеров,
+а наружу публикуются те же HTTP- и gRPC-порты, что и при локальном запуске.
+Остановить контейнерное окружение можно командой `task deploy:down`.
+
 При первом вызове Task автоматически установит необходимые локальные утилиты в `./bin`. Значения портов и учётные данные локального окружения можно изменить в `deploy/env/.env` и повторно выполнить `task env:generate`.
 
 После запуска доступны:
 
 - Order HTTP API: [http://localhost:8080](http://localhost:8080);
+- Order Swagger UI: [http://localhost:8080/docs/](http://localhost:8080/docs/);
 - health check: [http://localhost:8080/health](http://localhost:8080/health);
 - Kafka UI: [http://localhost:8081](http://localhost:8081);
+- Inventory HTTP API: [http://localhost:8082/api/v1/parts](http://localhost:8082/api/v1/parts);
+- Inventory Swagger UI: [http://localhost:8082/docs/](http://localhost:8082/docs/);
 - Inventory gRPC: `localhost:50051`;
 - Payment gRPC: `localhost:50052`.
 
 
 
-Остановка инфраструктуры:
+Остановка локальной инфраструктуры:
 
 ```bash
 task env:down
@@ -222,7 +256,22 @@ OrderService предоставляет следующие HTTP-операции
 | `POST` | `/api/v1/orders/{order_uuid}/cancel` | Отменить заказ |
 | `GET` | `/health` | Проверить состояние OrderService |
 
-Исходный OpenAPI-контракт находится в [`shared/api/order/v1`](shared/api/order/v1), Protobuf-контракты — в [`shared/proto`](shared/proto). Сгенерированные файлы вручную не редактируются.
+InventoryService предоставляет HTTP/JSON API через gRPC-Gateway и сохраняет
+исходный gRPC API для межсервисного взаимодействия:
+
+| Метод | Путь | Назначение |
+| --- | --- | --- |
+| `GET` | `/api/v1/parts` | Получить список доступных деталей |
+| `GET` | `/api/v1/parts/{uuid}` | Получить деталь по UUID |
+
+Фильтры списка передаются в query string согласно структуре `PartsFilter`,
+например:
+
+```bash
+curl 'http://localhost:8082/api/v1/parts?filter.categories=CATEGORY_ENGINE&filter.tags=critical'
+```
+
+Исходный OpenAPI-контракт OrderService находится в [`shared/api/order/v1`](shared/api/order/v1), Protobuf-контракты — в [`shared/proto`](shared/proto), а сгенерированный Swagger InventoryService — в [`shared/api/generated`](shared/api/generated). Swagger UI загружает интерфейс из CDN, поэтому для открытия страниц документации нужен доступ к интернету. Сгенерированные файлы вручную не редактируются.
 
 Повторная генерация контрактов:
 

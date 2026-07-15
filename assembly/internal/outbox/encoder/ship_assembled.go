@@ -12,14 +12,15 @@ import (
 )
 
 const (
-	shipAssembledTopic = "assembly.ship-assembled.v1"
-	shipAssembledType  = "events.v1.ShipAssembled" //nolint:gosec // G101: Kafka event type, not a credential.
+	shipAssembledType = "events.v1.ShipAssembled" //nolint:gosec // G101: Kafka event type, not a credential.
 )
 
-type ShipAssembled struct{}
+type ShipAssembled struct {
+	topic string
+}
 
-func NewShipAssembled() *ShipAssembled {
-	return &ShipAssembled{}
+func NewShipAssembled(topic string) *ShipAssembled {
+	return &ShipAssembled{topic: topic}
 }
 
 func (e *ShipAssembled) Encode(event domain.ShipAssembledEvent) (outbox.Event, error) {
@@ -42,7 +43,7 @@ func (e *ShipAssembled) Encode(event domain.ShipAssembledEvent) (outbox.Event, e
 	return outbox.Event{
 		ID:          event.ID,
 		AggregateID: event.OrderID,
-		Topic:       shipAssembledTopic,
+		Topic:       e.topic,
 		Key:         []byte(event.OrderID.String()),
 		Payload:     payload,
 		Headers:     map[string]string{"event-type": shipAssembledType},

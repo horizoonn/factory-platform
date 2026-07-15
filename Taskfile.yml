@@ -9,6 +9,8 @@ vars:
   BUF_VERSION: '1.69.0'
   PROTOC_GEN_GO_VERSION: 'v1.36.11'
   PROTOC_GEN_GO_GRPC_VERSION: 'v1.6.1'
+  PROTOC_GEN_GRPC_GATEWAY_VERSION: 'v2.26.3'
+  PROTOC_GEN_OPENAPIV2_VERSION: 'v2.26.3'
   GOOSE_VERSION: 'v3.27.1'
   OGEN_VERSION: 'v1.22.0'
   YQ_VERSION: 'v4.45.2'
@@ -23,6 +25,8 @@ vars:
   BUF: '{{.BIN_DIR}}/buf'
   PROTOC_GEN_GO: '{{.BIN_DIR}}/protoc-gen-go'
   PROTOC_GEN_GO_GRPC: '{{.BIN_DIR}}/protoc-gen-go-grpc'
+  PROTOC_GEN_GRPC_GATEWAY: '{{.BIN_DIR}}/protoc-gen-grpc-gateway'
+  PROTOC_GEN_OPENAPIV2: '{{.BIN_DIR}}/protoc-gen-openapiv2'
   GOOSE: '{{.BIN_DIR}}/goose'
   OGEN: '{{.BIN_DIR}}/ogen'
   YQ: '{{.BIN_DIR}}/yq'
@@ -44,10 +48,12 @@ vars:
   CORE_ENV_FILE: '{{.ROOT_DIR}}/deploy/compose/core/.env'
   ASSEMBLY_ENV_FILE: '{{.ROOT_DIR}}/deploy/env/assembly.env'
   INVENTORY_ENV_FILE: '{{.ROOT_DIR}}/deploy/env/inventory.env'
+  PAYMENT_ENV_FILE: '{{.ROOT_DIR}}/deploy/env/payment.env'
   ORDER_ENV_FILE: '{{.ROOT_DIR}}/deploy/env/order.env'
   CORE_COMPOSE_FILE: '{{.ROOT_DIR}}/deploy/compose/core/docker-compose.yml'
   ASSEMBLY_COMPOSE_FILE: '{{.ROOT_DIR}}/deploy/compose/assembly/docker-compose.yaml'
   INVENTORY_COMPOSE_FILE: '{{.ROOT_DIR}}/deploy/compose/inventory/docker-compose.yaml'
+  PAYMENT_COMPOSE_FILE: '{{.ROOT_DIR}}/deploy/compose/payment/docker-compose.yaml'
   ORDER_COMPOSE_FILE: '{{.ROOT_DIR}}/deploy/compose/order/docker-compose.yaml'
 
   MODULES: assembly inventory order payment platform iam notification shared
@@ -179,22 +185,29 @@ tasks:
           echo '📦 Installing protoc-gen-go-grpc...'
           GOBIN={{.BIN_DIR}} go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@{{.PROTOC_GEN_GO_GRPC_VERSION}}
         }
+        [ -f {{.PROTOC_GEN_GRPC_GATEWAY}} ] || {
+          echo '📦 Installing protoc-gen-grpc-gateway...'
+          GOBIN={{.BIN_DIR}} go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@{{.PROTOC_GEN_GRPC_GATEWAY_VERSION}}
+        }
+        [ -f {{.PROTOC_GEN_OPENAPIV2}} ] || {
+          echo '📦 Installing protoc-gen-openapiv2...'
+          GOBIN={{.BIN_DIR}} go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@{{.PROTOC_GEN_OPENAPIV2_VERSION}}
+        }
 
   proto:update-deps:
     deps: [ install-buf ]
-    desc: Обновление зависимостей protobuf из удаленных репозиториев (googleapis и т.д.)
+    desc: Проверка локальных protobuf-зависимостей
     dir: shared/proto
     cmds:
       - |
-        echo "🔄 Обновляем зависимости buf..."
-        {{.BUF}} dep update
+        echo "🔍 Проверяем локальные зависимости protobuf..."
+        {{.BUF}} build
 
   proto:gen:
     deps: [ proto:install-plugins ]
     desc: Генерация Go-кода из .proto
     dir: shared/proto
     cmds:
-      - task: proto:update-deps
       - task: proto:lint
       - '{{.BUF}} generate'
 
@@ -452,10 +465,10 @@ tasks:
     cmds:
       - |
         docker compose --env-file {{.ASSEMBLY_ENV_FILE}} -f {{.ASSEMBLY_COMPOSE_FILE}} config --quiet
-        docker compose --env-file {{.ASSEMBLY_ENV_FILE}} -f {{.ASSEMBLY_COMPOSE_FILE}} up -d --wait
+        docker compose --env-file {{.ASSEMBLY_ENV_FILE}} -f {{.ASSEMBLY_COMPOSE_FILE}} up -d --wait postgres-assembly
 
   compose:down:assembly:
-    desc: "Остановка Postgres для AssemblyService"
+    desc: "Остановка AssemblyService и Postgres"
     preconditions:
       - sh: test -f {{.ASSEMBLY_ENV_FILE}}
         msg: "Создай deploy/env/assembly.env через task env:generate"
@@ -476,10 +489,10 @@ tasks:
     cmds:
       - |
         docker compose --env-file {{.INVENTORY_ENV_FILE}} -f {{.INVENTORY_COMPOSE_FILE}} config --quiet
-        docker compose --env-file {{.INVENTORY_ENV_FILE}} -f {{.INVENTORY_COMPOSE_FILE}} up -d --wait
+        docker compose --env-file {{.INVENTORY_ENV_FILE}} -f {{.INVENTORY_COMPOSE_FILE}} up -d --wait postgres-inventory
 
   compose:down:inventory:
-    desc: "Остановка Postgres для InventoryService"
+    desc: "Остановка InventoryService и Postgres"
     preconditions:
       - sh: test -f {{.INVENTORY_ENV_FILE}}
         msg: "Создай deploy/env/inventory.env через task env:generate"
@@ -488,6 +501,45 @@ tasks:
     cmds:
       - |
         docker compose --env-file {{.INVENTORY_ENV_FILE}} -f {{.INVENTORY_COMPOSE_FILE}} down
+
+  compose:deploy:assembly:
+    desc: "Сборка и запуск AssemblyService"
+    deps: [infra:network]
+    preconditions:
+      - sh: test -f {{.ASSEMBLY_ENV_FILE}}
+        msg: "Создай deploy/env/assembly.env через task env:generate"
+      - sh: test -f {{.ASSEMBLY_COMPOSE_FILE}}
+        msg: "Не найден {{.ASSEMBLY_COMPOSE_FILE}}"
+    cmds:
+      - |
+        docker compose --env-file {{.ASSEMBLY_ENV_FILE}} -f {{.ASSEMBLY_COMPOSE_FILE}} config --quiet
+        docker compose --env-file {{.ASSEMBLY_ENV_FILE}} -f {{.ASSEMBLY_COMPOSE_FILE}} up -d --build --wait
+
+  compose:deploy:inventory:
+    desc: "Сборка и запуск InventoryService"
+    deps: [infra:network]
+    preconditions:
+      - sh: test -f {{.INVENTORY_ENV_FILE}}
+        msg: "Создай deploy/env/inventory.env через task env:generate"
+      - sh: test -f {{.INVENTORY_COMPOSE_FILE}}
+        msg: "Не найден {{.INVENTORY_COMPOSE_FILE}}"
+    cmds:
+      - |
+        docker compose --env-file {{.INVENTORY_ENV_FILE}} -f {{.INVENTORY_COMPOSE_FILE}} config --quiet
+        docker compose --env-file {{.INVENTORY_ENV_FILE}} -f {{.INVENTORY_COMPOSE_FILE}} up -d --build --wait
+
+  compose:deploy:payment:
+    desc: "Сборка и запуск PaymentService"
+    deps: [infra:network]
+    preconditions:
+      - sh: test -f {{.PAYMENT_ENV_FILE}}
+        msg: "Создай deploy/env/payment.env через task env:generate"
+      - sh: test -f {{.PAYMENT_COMPOSE_FILE}}
+        msg: "Не найден {{.PAYMENT_COMPOSE_FILE}}"
+    cmds:
+      - |
+        docker compose --env-file {{.PAYMENT_ENV_FILE}} -f {{.PAYMENT_COMPOSE_FILE}} config --quiet
+        docker compose --env-file {{.PAYMENT_ENV_FILE}} -f {{.PAYMENT_COMPOSE_FILE}} up -d --build --wait
 
   compose:up:order:
     desc: "Запуск Postgres для OrderService"
@@ -500,10 +552,23 @@ tasks:
     cmds:
       - |
         docker compose --env-file {{.ORDER_ENV_FILE}} -f {{.ORDER_COMPOSE_FILE}} config --quiet
-        docker compose --env-file {{.ORDER_ENV_FILE}} -f {{.ORDER_COMPOSE_FILE}} up -d --wait
+        docker compose --env-file {{.ORDER_ENV_FILE}} -f {{.ORDER_COMPOSE_FILE}} up -d --wait postgres-order
+
+  compose:deploy:order:
+    desc: "Сборка и запуск OrderService"
+    deps: [infra:network]
+    preconditions:
+      - sh: test -f {{.ORDER_ENV_FILE}}
+        msg: "Создай deploy/env/order.env через task env:generate"
+      - sh: test -f {{.ORDER_COMPOSE_FILE}}
+        msg: "Не найден {{.ORDER_COMPOSE_FILE}}"
+    cmds:
+      - |
+        docker compose --env-file {{.ORDER_ENV_FILE}} -f {{.ORDER_COMPOSE_FILE}} config --quiet
+        docker compose --env-file {{.ORDER_ENV_FILE}} -f {{.ORDER_COMPOSE_FILE}} up -d --build --wait
 
   compose:down:order:
-    desc: "Остановка Postgres для OrderService"
+    desc: "Остановка OrderService и Postgres"
     preconditions:
       - sh: test -f {{.ORDER_ENV_FILE}}
         msg: "Создай deploy/env/order.env через task env:generate"
@@ -512,6 +577,17 @@ tasks:
     cmds:
       - |
         docker compose --env-file {{.ORDER_ENV_FILE}} -f {{.ORDER_COMPOSE_FILE}} down
+
+  compose:down:payment:
+    desc: "Остановка PaymentService"
+    preconditions:
+      - sh: test -f {{.PAYMENT_ENV_FILE}}
+        msg: "Создай deploy/env/payment.env через task env:generate"
+      - sh: test -f {{.PAYMENT_COMPOSE_FILE}}
+        msg: "Не найден {{.PAYMENT_COMPOSE_FILE}}"
+    cmds:
+      - |
+        docker compose --env-file {{.PAYMENT_ENV_FILE}} -f {{.PAYMENT_COMPOSE_FILE}} down
 
   env:up:
     desc: "Запуск локальной инфраструктуры: Kafka и локальные БД"
@@ -525,9 +601,24 @@ tasks:
     desc: "Остановка локальной инфраструктуры"
     cmds:
       - task: compose:down:order
+      - task: compose:down:payment
       - task: compose:down:inventory
       - task: compose:down:assembly
       - task: compose:down:core
+
+  deploy:up:
+    desc: "Сборка и запуск всех сервисов в Docker"
+    cmds:
+      - task: compose:up:core
+      - task: compose:deploy:assembly
+      - task: compose:deploy:inventory
+      - task: compose:deploy:payment
+      - task: compose:deploy:order
+
+  deploy:down:
+    desc: "Остановка контейнеров приложений и инфраструктуры"
+    cmds:
+      - task: env:down
 
   env:bootstrap:
     desc: "Подготовка локального окружения: infra up и миграции"

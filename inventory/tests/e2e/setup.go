@@ -72,14 +72,18 @@ func setupTestEnvironment(ctx context.Context) (*TestEnvironment, error) {
 		ctx,
 		app.WithName(inventoryAppName),
 		app.WithPort(inventoryGRPCPort),
+		app.WithExtraPorts(inventoryHTTPPort),
 		app.WithDockerfile(projectRoot, inventoryDockerfile),
 		app.WithNetwork(generatedNetwork.Name()),
 		app.WithLogOutput(os.Stdout),
 		app.WithKeepImage(true),
-		app.WithStartupWait(wait.ForExec([]string{
-			"/bin/grpc-health-probe",
-			"-addr=:50051",
-		}).WithStartupTimeout(startupTimeout)),
+		app.WithStartupWait(wait.ForAll(
+			wait.ForExec([]string{
+				"/bin/grpc-health-probe",
+				"-addr=:50051",
+			}),
+			wait.ForListeningPort(inventoryHTTPPort+"/tcp"),
+		).WithStartupTimeoutDefault(startupTimeout)),
 		app.WithEnv(map[string]string{
 			"POSTGRES_HOST":     postgresAlias,
 			"POSTGRES_PORT":     "5432",

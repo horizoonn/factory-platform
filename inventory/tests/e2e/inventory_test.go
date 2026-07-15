@@ -3,6 +3,9 @@
 package e2e
 
 import (
+	"fmt"
+	"io"
+	"net/http"
 	"testing"
 
 	"github.com/google/uuid"
@@ -12,6 +15,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	inventorypb "github.com/horizoonn/factory-platform/shared/pkg/proto/inventory/v1"
 )
@@ -92,6 +96,39 @@ func TestInventoryService_ListParts(t *testing.T) {
 	require.Len(t, resp.GetParts(), 1)
 	assert.Equal(t, engine.GetUuid(), resp.GetParts()[0].GetUuid())
 	assert.Equal(t, engine.GetName(), resp.GetParts()[0].GetName())
+}
+
+func TestInventoryHTTP_ListParts(t *testing.T) {
+	env := requireTestEnv(t)
+	env.ClearParts(t)
+
+	engine := env.InsertPart(t, basePartFixture())
+	httpAddress, err := env.App.AddressFor(inventoryHTTPPort)
+	require.NoError(t, err)
+
+	req, err := http.NewRequestWithContext(
+		testContext(t),
+		http.MethodGet,
+		fmt.Sprintf("http://%s/api/v1/parts?filter.categories=CATEGORY_ENGINE&filter.tags=critical", httpAddress),
+		http.NoBody,
+	)
+	require.NoError(t, err)
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, resp.Body.Close())
+	}()
+
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, resp.StatusCode, string(body))
+
+	var result inventorypb.ListPartsResponse
+	require.NoError(t, protojson.Unmarshal(body, &result))
+	require.Len(t, result.GetParts(), 1)
+	assert.Equal(t, engine.GetUuid(), result.GetParts()[0].GetUuid())
+	assert.Equal(t, engine.GetName(), result.GetParts()[0].GetName())
 }
 
 func newInventoryClient(t *testing.T, env *TestEnvironment) (inventorypb.InventoryServiceClient, func()) {

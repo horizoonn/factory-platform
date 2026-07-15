@@ -22,6 +22,7 @@ func NewProducer(config Config) (*Producer, error) {
 
 	opts := []kgo.Opt{
 		kgo.SeedBrokers(config.Brokers...),
+		kgo.AllowAutoTopicCreation(),
 		kgo.RecordDeliveryTimeout(config.deliveryTimeout()),
 		kgo.AllowIdempotentProduceCancellation(),
 	}

@@ -25,5 +25,6 @@
 
 /bin
 node_modules
-/shared/api/bundles/
+/shared/api/bundles/*
+!/shared/api/bundles/order.openapi.v1.bundle.yaml
 /coverage/

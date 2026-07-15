@@ -195,7 +195,7 @@ func (d *diContainer) OrderRepository() orderservice.Repository {
 
 func (d *diContainer) OrderPaidEncoder() *encoder.OrderPaid {
 	if d.orderPaidEncoder == nil {
-		d.orderPaidEncoder = encoder.NewOrderPaid()
+		d.orderPaidEncoder = encoder.NewOrderPaid(d.cfg.OrderPaidTopic())
 	}
 
 	return d.orderPaidEncoder

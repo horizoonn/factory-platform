@@ -29,6 +29,7 @@ func NewConsumer(config Config, opts ...Option) (*Consumer, error) {
 
 	clientOpts := []kgo.Opt{
 		kgo.SeedBrokers(config.Brokers...),
+		kgo.AllowAutoTopicCreation(),
 		kgo.ConsumerGroup(config.GroupID),
 		kgo.ConsumeTopics(config.Topics...),
 		kgo.DisableAutoCommit(),

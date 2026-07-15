@@ -20,6 +20,7 @@ type envConfig struct {
 	logger                logger.Config
 	postgres              pgxpool.Config
 	orderPaidProducer     producerfranz.Config
+	orderPaidTopic        string
 	shipAssembledConsumer consumerfranz.Config
 	outboxDispatcher      outboxdispatcher.Config
 }
@@ -65,7 +66,7 @@ func NewConfig() (Config, error) {
 		return nil, fmt.Errorf("get kafka brokers: %w", err)
 	}
 
-	orderPaidProducerConfig, err := env.NewOrderPaidProducerConfig(brokers)
+	orderPaidProducerConfig, orderPaidTopic, err := env.NewOrderPaidProducerConfig(brokers)
 	if err != nil {
 		return nil, fmt.Errorf("get order paid producer config: %w", err)
 	}
@@ -96,6 +97,7 @@ func NewConfig() (Config, error) {
 		logger:                loggerConfig,
 		postgres:              postgresConfig,
 		orderPaidProducer:     orderPaidProducerConfig,
+		orderPaidTopic:        orderPaidTopic,
 		shipAssembledConsumer: shipAssembledConsumerConfig,
 		outboxDispatcher:      outboxDispatcherConfig,
 	}, nil
@@ -141,6 +143,10 @@ func (c envConfig) Postgres() pgxpool.Config {
 
 func (c envConfig) OrderPaidProducer() producerfranz.Config {
 	return c.orderPaidProducer
+}
+
+func (c envConfig) OrderPaidTopic() string {
+	return c.orderPaidTopic
 }
 
 func (c envConfig) ShipAssembledConsumer() consumerfranz.Config {

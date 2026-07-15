@@ -124,7 +124,7 @@ func (d *diContainer) AssemblyService() *assemblyservice.Service {
 
 func (d *diContainer) ShipAssembledEncoder() *encoder.ShipAssembled {
 	if d.shipAssembledEncoder == nil {
-		d.shipAssembledEncoder = encoder.NewShipAssembled()
+		d.shipAssembledEncoder = encoder.NewShipAssembled(d.cfg.ShipAssembledTopic())
 	}
 
 	return d.shipAssembledEncoder

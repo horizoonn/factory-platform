@@ -17,6 +17,7 @@ type Config interface {
 	Postgres() pgxpool.Config
 	OrderPaidConsumer() consumerfranz.Config
 	ShipAssembledProducer() producerfranz.Config
+	ShipAssembledTopic() string
 	OutboxDispatcher() outboxdispatcher.Config
 }
 
