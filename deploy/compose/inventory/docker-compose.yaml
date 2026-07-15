@@ -1,4 +1,25 @@
 services:
+  inventory:
+    build:
+      context: ../../..
+      dockerfile: deploy/docker/inventory/Dockerfile
+    container_name: inventory
+    env_file:
+      - .env
+    environment:
+      POSTGRES_HOST: ${DOCKER_POSTGRES_HOST}
+      POSTGRES_PORT: ${DOCKER_POSTGRES_PORT}
+      INVENTORY_MIGRATIONS_DIR: ${DOCKER_MIGRATIONS_DIR}
+    ports:
+      - "${INVENTORY_GRPC_PORT}:${INVENTORY_GRPC_PORT}"
+      - "${INVENTORY_HTTP_PORT}:${INVENTORY_HTTP_PORT}"
+    depends_on:
+      postgres-inventory:
+        condition: service_healthy
+    restart: on-failure
+    networks:
+      - microservices-net
+
   postgres-inventory:
     image: postgres:18.1-bookworm
     container_name: postgres-inventory
@@ -7,7 +28,7 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
     ports:
-      - ${POSTGRES_BIND_HOST}:${POSTGRES_EXTERNAL_PORT}:5432
+      - ${POSTGRES_BIND_HOST}:${POSTGRES_EXTERNAL_PORT}:${DOCKER_POSTGRES_PORT}
     volumes:
       - postgres_inventory_data:/var/lib/postgresql
     healthcheck:

@@ -1,4 +1,27 @@
 services:
+  order:
+    build:
+      context: ../../..
+      dockerfile: deploy/docker/order/Dockerfile
+    container_name: order
+    env_file:
+      - .env
+    environment:
+      KAFKA_BROKERS: ${DOCKER_KAFKA_BROKERS}
+      INVENTORY_GRPC_HOST: ${DOCKER_INVENTORY_GRPC_HOST}
+      PAYMENT_GRPC_HOST: ${DOCKER_PAYMENT_GRPC_HOST}
+      POSTGRES_HOST: ${DOCKER_POSTGRES_HOST}
+      POSTGRES_PORT: ${DOCKER_POSTGRES_PORT}
+      ORDER_MIGRATIONS_DIR: ${DOCKER_MIGRATIONS_DIR}
+    ports:
+      - "${ORDER_HTTP_PORT}:${ORDER_HTTP_PORT}"
+    depends_on:
+      postgres-order:
+        condition: service_healthy
+    restart: on-failure
+    networks:
+      - microservices-net
+
   postgres-order:
     image: postgres:18.1-bookworm
     container_name: postgres-order
@@ -7,7 +30,7 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
     ports:
-      - ${POSTGRES_BIND_HOST}:${POSTGRES_EXTERNAL_PORT}:5432
+      - ${POSTGRES_BIND_HOST}:${POSTGRES_EXTERNAL_PORT}:${DOCKER_POSTGRES_PORT}
     volumes:
       - postgres_order_data:/var/lib/postgresql
     healthcheck:
