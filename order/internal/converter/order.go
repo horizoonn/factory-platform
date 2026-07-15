@@ -42,6 +42,8 @@ func OrderStatusToOpenAPI(status domain.OrderStatus) (orderopenapi.OrderStatus, 
 		return orderopenapi.OrderStatusPENDINGPAYMENT, nil
 	case domain.OrderStatusPaid:
 		return orderopenapi.OrderStatusPAID, nil
+	case domain.OrderStatusCompleted:
+		return orderopenapi.OrderStatusCOMPLETED, nil
 	case domain.OrderStatusCancelled:
 		return orderopenapi.OrderStatusCANCELLED, nil
 	default:
