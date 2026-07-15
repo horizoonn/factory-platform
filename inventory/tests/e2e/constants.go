@@ -15,6 +15,7 @@ const (
 	inventoryAppName    = "inventory-app"
 	inventoryDockerfile = "deploy/docker/inventory/Dockerfile"
 	inventoryGRPCPort   = "50051"
+	inventoryHTTPPort   = "8082"
 
 	setupTimeout    = 15 * time.Minute
 	startupTimeout  = 5 * time.Minute

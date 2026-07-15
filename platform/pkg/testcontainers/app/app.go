@@ -32,6 +32,7 @@ type Config struct {
 	DockerfileDir string
 	Dockerfile    string
 	Port          string
+	ExtraPorts    []string
 	Env           map[string]string
 	Networks      []string
 	LogOutput     io.Writer
@@ -41,10 +42,10 @@ type Config struct {
 }
 
 type Container struct {
-	container    testcontainers.Container
-	externalHost string
-	externalPort string
-	cfg          Config
+	container     testcontainers.Container
+	externalHost  string
+	externalPorts map[string]string
+	cfg           Config
 }
 
 func NewContainer(ctx context.Context, opts ...Option) (*Container, error) {
@@ -62,6 +63,12 @@ func NewContainer(ctx context.Context, opts ...Option) (*Container, error) {
 		opt(&cfg)
 	}
 
+	exposedPorts := make([]string, 0, 1+len(cfg.ExtraPorts))
+	exposedPorts = append(exposedPorts, cfg.Port+"/tcp")
+	for _, port := range cfg.ExtraPorts {
+		exposedPorts = append(exposedPorts, port+"/tcp")
+	}
+
 	req := testcontainers.ContainerRequest{
 		Name: cfg.Name,
 		FromDockerfile: testcontainers.FromDockerfile{
@@ -72,7 +79,7 @@ func NewContainer(ctx context.Context, opts ...Option) (*Container, error) {
 		},
 		Networks:           cfg.Networks,
 		Env:                cfg.Env,
-		ExposedPorts:       []string{cfg.Port + "/tcp"},
+		ExposedPorts:       exposedPorts,
 		WaitingFor:         cfg.StartupWait,
 		HostConfigModifier: defaultHostConfig(),
 	}
@@ -94,9 +101,13 @@ func NewContainer(ctx context.Context, opts ...Option) (*Container, error) {
 		}
 	}()
 
-	mappedPort, err := genericContainer.MappedPort(ctx, cfg.Port+"/tcp")
-	if err != nil {
-		return nil, fmt.Errorf("get mapped app port: %w", err)
+	externalPorts := make(map[string]string, len(exposedPorts))
+	for _, port := range append([]string{cfg.Port}, cfg.ExtraPorts...) {
+		mappedPort, err := genericContainer.MappedPort(ctx, port+"/tcp")
+		if err != nil {
+			return nil, fmt.Errorf("get mapped app port %s: %w", port, err)
+		}
+		externalPorts[port] = mappedPort.Port()
 	}
 
 	host, err := genericContainer.Host(ctx)
@@ -106,19 +117,28 @@ func NewContainer(ctx context.Context, opts ...Option) (*Container, error) {
 
 	go streamContainerLogs(ctx, genericContainer, cfg.LogOutput)
 
-	cfg.Logger.Info(ctx, "app container started", zap.String("address", net.JoinHostPort(host, mappedPort.Port())))
+	cfg.Logger.Info(ctx, "app container started", zap.String("address", net.JoinHostPort(host, externalPorts[cfg.Port])))
 	success = true
 
 	return &Container{
-		container:    genericContainer,
-		externalHost: host,
-		externalPort: mappedPort.Port(),
-		cfg:          cfg,
+		container:     genericContainer,
+		externalHost:  host,
+		externalPorts: externalPorts,
+		cfg:           cfg,
 	}, nil
 }
 
 func (c *Container) Address() string {
-	return net.JoinHostPort(c.externalHost, c.externalPort)
+	return net.JoinHostPort(c.externalHost, c.externalPorts[c.cfg.Port])
+}
+
+func (c *Container) AddressFor(port string) (string, error) {
+	externalPort, ok := c.externalPorts[port]
+	if !ok {
+		return "", fmt.Errorf("app port %s is not exposed", port)
+	}
+
+	return net.JoinHostPort(c.externalHost, externalPort), nil
 }
 
 func (c *Container) Terminate(ctx context.Context) error {
