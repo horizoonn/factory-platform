@@ -13,4 +13,8 @@ var (
 	ErrOrderCancelled       = errors.New("order is cancelled")
 	ErrPartsNotFound        = errors.New("some parts not found")
 	ErrEmptyParts           = errors.New("parts list is empty")
+	ErrEventIDRequired      = errors.New("event id is required")
+	ErrOccurredAtRequired   = errors.New("event occurred at is required")
+	ErrInvalidBuildTime     = errors.New("invalid build time")
+	ErrOrderUserMismatch    = errors.New("order user mismatch")
 )

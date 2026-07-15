@@ -12,11 +12,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/horizoonn/factory-platform/assembly/internal/outbox"
-	"github.com/horizoonn/factory-platform/assembly/internal/service/mocks"
+	"github.com/horizoonn/factory-platform/assembly/internal/outbox/mocks"
 	"github.com/horizoonn/factory-platform/platform/pkg/kafka"
 )
 
-func TestDispatcherProcessOnePublished(t *testing.T) {
+func TestDispatcher_ProcessOne_Published(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -48,7 +48,7 @@ func TestDispatcherProcessOnePublished(t *testing.T) {
 	assert.True(t, processed)
 }
 
-func TestDispatcherProcessOneNoEvent(t *testing.T) {
+func TestDispatcher_ProcessOne_NoEvent(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -67,7 +67,7 @@ func TestDispatcherProcessOneNoEvent(t *testing.T) {
 	assert.False(t, processed)
 }
 
-func TestDispatcherProcessOneRescheduled(t *testing.T) {
+func TestDispatcher_ProcessOne_Rescheduled(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -101,7 +101,7 @@ func TestDispatcherProcessOneRescheduled(t *testing.T) {
 	assert.True(t, processed)
 }
 
-func TestDispatcherProcessOneMaxAttempts(t *testing.T) {
+func TestDispatcher_ProcessOne_MaxAttempts(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()

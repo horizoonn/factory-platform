@@ -25,10 +25,18 @@ type inventoryPartFixture struct {
 func (env *TestEnvironment) ClearData(t *testing.T) {
 	t.Helper()
 
-	_, err := env.OrderPool.Exec(testContext(t), "TRUNCATE TABLE platform.orders CASCADE")
+	ctx := testContext(t)
+
+	_, err := env.OrderPool.Exec(
+		ctx,
+		"TRUNCATE TABLE platform.order_inbox_events, platform.order_outbox_events, platform.orders CASCADE",
+	)
 	require.NoError(t, err)
 
-	_, err = env.InventoryPool.Exec(testContext(t), "TRUNCATE TABLE platform.parts CASCADE")
+	_, err = env.AssemblyPool.Exec(ctx, "TRUNCATE TABLE platform.assembly_outbox_events")
+	require.NoError(t, err)
+
+	_, err = env.InventoryPool.Exec(ctx, "TRUNCATE TABLE platform.parts CASCADE")
 	require.NoError(t, err)
 }
 

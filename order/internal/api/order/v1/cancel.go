@@ -8,7 +8,10 @@ import (
 	orderopenapi "github.com/horizoonn/factory-platform/shared/pkg/openapi/order/v1"
 )
 
-func (h *Handler) CancelOrder(ctx context.Context, params orderopenapi.CancelOrderParams) (orderopenapi.CancelOrderRes, error) {
+func (h *Handler) CancelOrder(
+	ctx context.Context,
+	params orderopenapi.CancelOrderParams,
+) (orderopenapi.CancelOrderRes, error) {
 	if h.service == nil {
 		return nil, domain.ErrNotImplemented
 	}

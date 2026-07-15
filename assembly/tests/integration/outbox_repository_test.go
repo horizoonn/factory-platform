@@ -11,11 +11,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	outboxmodel "github.com/horizoonn/factory-platform/assembly/internal/outbox"
+	"github.com/horizoonn/factory-platform/assembly/internal/outbox"
 	outboxrepository "github.com/horizoonn/factory-platform/assembly/internal/repository/outbox"
 )
 
-func TestOutboxRepositoryEnqueue(t *testing.T) {
+func TestOutboxRepository_Enqueue(t *testing.T) {
 	testEnv.truncateOutbox(t)
 
 	repository := outboxrepository.NewRepository(testEnv.pool)
@@ -70,7 +70,7 @@ func TestOutboxRepositoryEnqueue(t *testing.T) {
 	assert.True(t, event.AvailableAt.Equal(nextAttemptAt))
 }
 
-func TestOutboxRepositoryEnqueueDuplicateSourceEvent(t *testing.T) {
+func TestOutboxRepository_Enqueue_DuplicateSourceEvent(t *testing.T) {
 	testEnv.truncateOutbox(t)
 
 	repository := outboxrepository.NewRepository(testEnv.pool)
@@ -97,7 +97,7 @@ func TestOutboxRepositoryEnqueueDuplicateSourceEvent(t *testing.T) {
 	assert.Equal(t, 1, count)
 }
 
-func TestOutboxRepositoryClaimAndMarkPublished(t *testing.T) {
+func TestOutboxRepository_ClaimAndMarkPublished(t *testing.T) {
 	testEnv.truncateOutbox(t)
 
 	repository := outboxrepository.NewRepository(testEnv.pool)
@@ -128,7 +128,7 @@ func TestOutboxRepositoryClaimAndMarkPublished(t *testing.T) {
 	assert.False(t, found)
 }
 
-func TestOutboxRepositoryRescheduleAndMarkFailed(t *testing.T) {
+func TestOutboxRepository_RescheduleAndMarkFailed(t *testing.T) {
 	testEnv.truncateOutbox(t)
 
 	repository := outboxrepository.NewRepository(testEnv.pool)
@@ -189,7 +189,7 @@ func TestOutboxRepositoryRescheduleAndMarkFailed(t *testing.T) {
 	require.NotNil(t, failedAt)
 }
 
-func TestOutboxRepositoryExpiredLeaseCanBeReclaimed(t *testing.T) {
+func TestOutboxRepository_ExpiredLeaseCanBeReclaimed(t *testing.T) {
 	testEnv.truncateOutbox(t)
 
 	repository := outboxrepository.NewRepository(testEnv.pool)
@@ -222,10 +222,10 @@ func TestOutboxRepositoryExpiredLeaseCanBeReclaimed(t *testing.T) {
 	require.NoError(t, repository.MarkPublished(testContext(t), "worker-2", event.ID))
 }
 
-func outboxFixture() outboxmodel.Event {
+func outboxFixture() outbox.Event {
 	availableAt := time.Now().UTC().Add(10 * time.Second).Truncate(time.Microsecond)
 
-	return outboxmodel.Event{
+	return outbox.Event{
 		ID:            uuid.MustParse("7d4a1f4f-07cc-48b2-b7c7-f6201f983001"),
 		SourceEventID: uuid.MustParse("7d4a1f4f-07cc-48b2-b7c7-f6201f983002"),
 		AggregateID:   uuid.MustParse("7d4a1f4f-07cc-48b2-b7c7-f6201f983003"),

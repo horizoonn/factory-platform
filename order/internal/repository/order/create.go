@@ -15,10 +15,27 @@ func (r *Repository) CreateOrder(ctx context.Context, order domain.Order) (domai
 	ctx, cancel := context.WithTimeout(ctx, r.pool.OpTimeout())
 	defer cancel()
 
-	query := `
-	INSERT INTO platform.orders (id, user_id, part_ids, total_price, transaction_id, payment_method, status)
-	VALUES ($1, $2, $3, $4, $5, $6, $7)
-	RETURNING id, user_id, part_ids, total_price, transaction_id, payment_method, status, created_at, updated_at;
+	const query = `
+		INSERT INTO platform.orders (
+			id,
+			user_id,
+			part_ids,
+			total_price,
+			transaction_id,
+			payment_method,
+			status
+		)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		RETURNING
+			id,
+			user_id,
+			part_ids,
+			total_price,
+			transaction_id,
+			payment_method,
+			status,
+			created_at,
+			updated_at
 	`
 
 	orderModel := converter.DomainOrderToModel(order)
@@ -38,7 +55,10 @@ func (r *Repository) CreateOrder(ctx context.Context, order domain.Order) (domai
 	var result model.Order
 	if err := result.Scan(row); err != nil {
 		if errors.Is(err, postgrespool.ErrViolatesForeignKey) {
-			return domain.Order{}, fmt.Errorf("referenced entity not found: %w", domain.ErrPartsNotFound)
+			return domain.Order{}, fmt.Errorf(
+				"referenced entity not found: %w",
+				domain.ErrPartsNotFound,
+			)
 		}
 		return domain.Order{}, fmt.Errorf("scan created order: %w", err)
 	}

@@ -1,6 +1,7 @@
 package env
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -19,6 +20,9 @@ func NewShipAssembledProducerConfig(brokers []string) (producerfranz.Config, err
 
 	if err := envconfig.Process("SHIP_ASSEMBLED_PRODUCER", &config); err != nil {
 		return producerfranz.Config{}, fmt.Errorf("process ship assembled producer envconfig: %w", err)
+	}
+	if config.DeliveryTimeout <= 0 {
+		return producerfranz.Config{}, errors.New("ship assembled producer delivery timeout must be positive")
 	}
 
 	return producerfranz.Config{

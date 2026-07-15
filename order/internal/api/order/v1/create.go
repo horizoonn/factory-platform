@@ -9,7 +9,10 @@ import (
 	orderopenapi "github.com/horizoonn/factory-platform/shared/pkg/openapi/order/v1"
 )
 
-func (h *Handler) CreateOrder(ctx context.Context, req *orderopenapi.CreateOrderRequest) (orderopenapi.CreateOrderRes, error) {
+func (h *Handler) CreateOrder(
+	ctx context.Context,
+	req *orderopenapi.CreateOrderRequest,
+) (orderopenapi.CreateOrderRes, error) {
 	if h.service == nil {
 		return nil, domain.ErrNotImplemented
 	}

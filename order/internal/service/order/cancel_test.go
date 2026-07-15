@@ -15,39 +15,16 @@ func TestService_CancelOrder(t *testing.T) {
 	tests := []struct {
 		name       string
 		orderID    uuid.UUID
-		setupMocks func(ctx context.Context, repository *mocks.Repository)
+		setupMocks func(context.Context, *mocks.Repository)
 		wantErr    error
 	}{
 		{
-			name:    "success pending payment",
+			name:    "success",
 			orderID: orderID,
 			setupMocks: func(ctx context.Context, repository *mocks.Repository) {
-				order := validOrder()
-
-				cancelledOrder := order
-				cancelledOrder.Status = domain.OrderStatusCancelled
-
 				repository.EXPECT().
-					GetOrder(ctx, orderID).
-					Return(order, nil).
-					Once()
-
-				repository.EXPECT().
-					UpdateOrder(ctx, cancelledOrder).
-					Return(cancelledOrder, nil).
-					Once()
-			},
-		},
-		{
-			name:    "success already cancelled",
-			orderID: orderID,
-			setupMocks: func(ctx context.Context, repository *mocks.Repository) {
-				order := validOrder()
-				order.Status = domain.OrderStatusCancelled
-
-				repository.EXPECT().
-					GetOrder(ctx, orderID).
-					Return(order, nil).
+					CancelOrder(ctx, orderID).
+					Return(nil).
 					Once()
 			},
 		},
@@ -57,61 +34,12 @@ func TestService_CancelOrder(t *testing.T) {
 			wantErr: domain.ErrOrderIDRequired,
 		},
 		{
-			name:    "error order already paid",
-			orderID: orderID,
-			setupMocks: func(ctx context.Context, repository *mocks.Repository) {
-				order := validOrder()
-				order.Status = domain.OrderStatusPaid
-
-				repository.EXPECT().
-					GetOrder(ctx, orderID).
-					Return(order, nil).
-					Once()
-			},
-			wantErr: domain.ErrOrderAlreadyPaid,
-		},
-		{
-			name:    "error invalid order status",
-			orderID: orderID,
-			setupMocks: func(ctx context.Context, repository *mocks.Repository) {
-				order := validOrder()
-				order.Status = domain.OrderStatusUnknown
-
-				repository.EXPECT().
-					GetOrder(ctx, orderID).
-					Return(order, nil).
-					Once()
-			},
-			wantErr: domain.ErrInvalidOrderStatus,
-		},
-		{
-			name:    "error get order from repository",
+			name:    "error cancel order in repository",
 			orderID: orderID,
 			setupMocks: func(ctx context.Context, repository *mocks.Repository) {
 				repository.EXPECT().
-					GetOrder(ctx, orderID).
-					Return(domain.Order{}, errRepository).
-					Once()
-			},
-			wantErr: errRepository,
-		},
-		{
-			name:    "error update order in repository",
-			orderID: orderID,
-			setupMocks: func(ctx context.Context, repository *mocks.Repository) {
-				order := validOrder()
-
-				cancelledOrder := order
-				cancelledOrder.Status = domain.OrderStatusCancelled
-
-				repository.EXPECT().
-					GetOrder(ctx, orderID).
-					Return(order, nil).
-					Once()
-
-				repository.EXPECT().
-					UpdateOrder(ctx, cancelledOrder).
-					Return(domain.Order{}, errRepository).
+					CancelOrder(ctx, orderID).
+					Return(errRepository).
 					Once()
 			},
 			wantErr: errRepository,
@@ -129,7 +57,6 @@ func TestService_CancelOrder(t *testing.T) {
 			}
 
 			err := service.CancelOrder(ctx, tt.orderID)
-
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return
@@ -144,9 +71,7 @@ func TestService_CancelOrder_ContextCanceled(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	repository := mocks.NewRepository(t)
-	service := newServiceWithRepository(repository)
-
+	service := newServiceWithRepository(mocks.NewRepository(t))
 	err := service.CancelOrder(ctx, orderID)
 
 	require.ErrorIs(t, err, context.Canceled)

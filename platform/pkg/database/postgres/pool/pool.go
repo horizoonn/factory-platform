@@ -6,14 +6,27 @@ import (
 )
 
 type Pool interface {
-	Query(ctx context.Context, sql string, args ...any) (Rows, error)
-	QueryRow(ctx context.Context, sql string, args ...any) Row
-	Exec(ctx context.Context, sql string, arguments ...any) (CommandTag, error)
+	Executor
 
 	Ping(ctx context.Context) error
 	Close()
 
 	OpTimeout() time.Duration
+}
+
+type Executor interface {
+	Query(ctx context.Context, sql string, args ...any) (Rows, error)
+	QueryRow(ctx context.Context, sql string, args ...any) Row
+	Exec(ctx context.Context, sql string, arguments ...any) (CommandTag, error)
+}
+
+type Transactor interface {
+	WithinTransaction(ctx context.Context, fn func(Executor) error) error
+}
+
+type TransactionalPool interface {
+	Pool
+	Transactor
 }
 
 type Rows interface {

@@ -9,7 +9,7 @@ CREATE TABLE platform.orders (
     total_price    NUMERIC(12,2) NOT NULL CHECK (total_price >= 0),
     transaction_id UUID,
     payment_method TEXT                   CHECK (payment_method IS NULL OR payment_method IN ('CARD', 'SBP', 'CREDIT_CARD', 'INVESTOR_MONEY')),
-    status         TEXT          NOT NULL CHECK (status IN ('PENDING_PAYMENT', 'PAID', 'CANCELLED')),
+    status         TEXT          NOT NULL CHECK (status IN ('PENDING_PAYMENT', 'PAID', 'COMPLETED', 'CANCELLED')),
     created_at     TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
     updated_at     TIMESTAMPTZ   NOT NULL DEFAULT NOW()
 );

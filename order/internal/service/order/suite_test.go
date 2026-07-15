@@ -2,6 +2,7 @@ package order
 
 import (
 	"errors"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -14,9 +15,12 @@ var (
 	userID        = uuid.MustParse("00000000-0000-0000-0000-000000000002")
 	partID        = uuid.MustParse("00000000-0000-0000-0000-000000000003")
 	transactionID = uuid.MustParse("00000000-0000-0000-0000-000000000004")
+	eventID       = uuid.MustParse("00000000-0000-0000-0000-000000000005")
+	eventTime     = time.Date(2026, 7, 14, 12, 0, 0, 0, time.UTC)
 
 	errRepository = errors.New("repository error")
 	errClient     = errors.New("client error")
+	errEncoder    = errors.New("encoder error")
 )
 
 func validCreateOrderRequest() servicedto.CreateOrderRequest {
@@ -44,6 +48,16 @@ func paidOrder(paymentMethod domain.PaymentMethod) domain.Order {
 	return order
 }
 
+func validShipAssembledEvent() domain.ShipAssembledEvent {
+	return domain.ShipAssembledEvent{
+		ID:           eventID,
+		OrderID:      orderID,
+		UserID:       userID,
+		BuildTimeSec: 42,
+		OccurredAt:   eventTime,
+	}
+}
+
 func validPart() domain.Part {
 	return domain.Part{
 		ID:    partID,
@@ -57,7 +71,7 @@ func newServiceWithOrderID(
 	paymentClient PaymentClient,
 	orderID uuid.UUID,
 ) *Service {
-	service := NewService(repository, inventoryClient, paymentClient)
+	service := NewService(repository, inventoryClient, paymentClient, nil)
 	service.idGenerator = func() uuid.UUID {
 		return orderID
 	}
@@ -65,5 +79,5 @@ func newServiceWithOrderID(
 }
 
 func newServiceWithRepository(repository Repository) *Service {
-	return NewService(repository, nil, nil)
+	return NewService(repository, nil, nil, nil)
 }

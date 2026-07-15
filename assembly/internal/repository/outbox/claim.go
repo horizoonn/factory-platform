@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	outboxmodel "github.com/horizoonn/factory-platform/assembly/internal/outbox"
+	"github.com/horizoonn/factory-platform/assembly/internal/outbox"
 	postgrespool "github.com/horizoonn/factory-platform/platform/pkg/database/postgres/pool"
 )
 
@@ -15,7 +15,7 @@ func (r *Repository) ClaimOne(
 	ctx context.Context,
 	workerID string,
 	leaseDuration time.Duration,
-) (outboxmodel.Event, bool, error) {
+) (outbox.Event, bool, error) {
 	ctx, cancel := context.WithTimeout(ctx, r.pool.OpTimeout())
 	defer cancel()
 
@@ -44,7 +44,7 @@ func (r *Repository) ClaimOne(
 	`
 
 	var (
-		event       outboxmodel.Event
+		event       outbox.Event
 		headersJSON []byte
 	)
 
@@ -60,14 +60,14 @@ func (r *Repository) ClaimOne(
 		&event.Attempts,
 	)
 	if errors.Is(err, postgrespool.ErrNoRows) {
-		return outboxmodel.Event{}, false, nil
+		return outbox.Event{}, false, nil
 	}
 	if err != nil {
-		return outboxmodel.Event{}, false, fmt.Errorf("claim outbox event: %w", err)
+		return outbox.Event{}, false, fmt.Errorf("claim outbox event: %w", err)
 	}
 
 	if err := json.Unmarshal(headersJSON, &event.Headers); err != nil {
-		return outboxmodel.Event{}, false, fmt.Errorf("unmarshal outbox event headers: %w", err)
+		return outbox.Event{}, false, fmt.Errorf("unmarshal outbox event headers: %w", err)
 	}
 
 	return event, true, nil

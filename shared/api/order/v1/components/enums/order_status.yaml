@@ -3,5 +3,6 @@ description: Order status
 enum:
   - PENDING_PAYMENT
   - PAID
+  - COMPLETED
   - CANCELLED
 example: PENDING_PAYMENT
