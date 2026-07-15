@@ -7,7 +7,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 
-	postgresPool "github.com/horizoonn/factory-platform/platform/pkg/database/postgres/pool"
+	postgrespool "github.com/horizoonn/factory-platform/platform/pkg/database/postgres/pool"
 )
 
 type pgxRows struct {
@@ -34,13 +34,13 @@ func mapErrors(err error) error {
 	const pgxForeignKeyErrorCode = "23503"
 
 	if errors.Is(err, pgx.ErrNoRows) {
-		return postgresPool.ErrNoRows
+		return postgrespool.ErrNoRows
 	}
 
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) {
 		if pgErr.Code == pgxForeignKeyErrorCode {
-			return fmt.Errorf("%w: %w", postgresPool.ErrViolatesForeignKey, err)
+			return fmt.Errorf("%w: %w", postgrespool.ErrViolatesForeignKey, err)
 		}
 	}
 

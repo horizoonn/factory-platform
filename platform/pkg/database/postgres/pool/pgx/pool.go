@@ -9,7 +9,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	postgresPool "github.com/horizoonn/factory-platform/platform/pkg/database/postgres/pool"
+	postgrespool "github.com/horizoonn/factory-platform/platform/pkg/database/postgres/pool"
 )
 
 type Pool struct {
@@ -51,7 +51,7 @@ func NewPool(ctx context.Context, config Config) (*Pool, error) {
 	}, nil
 }
 
-func (p *Pool) Query(ctx context.Context, sql string, args ...any) (postgresPool.Rows, error) {
+func (p *Pool) Query(ctx context.Context, sql string, args ...any) (postgrespool.Rows, error) {
 	rows, err := p.Pool.Query(ctx, sql, args...)
 	if err != nil {
 		return nil, mapErrors(err)
@@ -60,13 +60,13 @@ func (p *Pool) Query(ctx context.Context, sql string, args ...any) (postgresPool
 	return pgxRows{rows}, nil
 }
 
-func (p *Pool) QueryRow(ctx context.Context, sql string, args ...any) postgresPool.Row {
+func (p *Pool) QueryRow(ctx context.Context, sql string, args ...any) postgrespool.Row {
 	row := p.Pool.QueryRow(ctx, sql, args...)
 
 	return pgxRow{row}
 }
 
-func (p *Pool) Exec(ctx context.Context, sql string, arguments ...any) (postgresPool.CommandTag, error) {
+func (p *Pool) Exec(ctx context.Context, sql string, arguments ...any) (postgrespool.CommandTag, error) {
 	tag, err := p.Pool.Exec(ctx, sql, arguments...)
 	if err != nil {
 		return nil, mapErrors(err)
