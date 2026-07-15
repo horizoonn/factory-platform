@@ -7,6 +7,7 @@ require (
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/moby/moby/api v1.55.0
 	github.com/pressly/goose/v3 v3.27.2
+	github.com/stretchr/testify v1.11.1
 	github.com/testcontainers/testcontainers-go v0.43.0
 	github.com/testcontainers/testcontainers-go/modules/postgres v0.43.0
 	github.com/twmb/franz-go v1.21.5
@@ -58,7 +59,6 @@ require (
 	github.com/sethvargo/go-retry v0.3.0 // indirect
 	github.com/shirou/gopsutil/v4 v4.26.5 // indirect
 	github.com/sirupsen/logrus v1.9.4 // indirect
-	github.com/stretchr/testify v1.11.1 // indirect
 	github.com/tklauser/go-sysconf v0.3.16 // indirect
 	github.com/tklauser/numcpus v0.11.0 // indirect
 	github.com/twmb/franz-go/pkg/kmsg v1.13.1 // indirect

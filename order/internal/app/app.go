@@ -16,6 +16,8 @@ import (
 	"github.com/horizoonn/factory-platform/order/internal/config"
 	"github.com/horizoonn/factory-platform/platform/pkg/database/postgres/migrator"
 	"github.com/horizoonn/factory-platform/platform/pkg/logger"
+	"github.com/horizoonn/factory-platform/platform/pkg/swaggerui"
+	sharedapi "github.com/horizoonn/factory-platform/shared/api"
 )
 
 const readHeaderTimeout = 5 * time.Second
@@ -145,6 +147,13 @@ func (a *App) initHTTPServer() error {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", a.diContainer.HealthChecker().Handler)
+	mux.Handle("/docs/", swaggerui.NewHandler(swaggerui.Config{
+		Title:           "Order API",
+		UIPath:          "/docs/",
+		SpecPath:        "/docs/openapi.yaml",
+		Spec:            sharedapi.OrderOpenAPIV1(),
+		SpecContentType: "application/yaml",
+	}))
 	mux.Handle("/", orderServer)
 
 	a.httpServer = &http.Server{
