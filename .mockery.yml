@@ -16,7 +16,8 @@ packages:
       dir: "assembly/internal/service/mocks"
       filename: "mock_assembly_service.go"
     interfaces:
-      ShipAssembledOutbox:
+      Outbox:
+      ShipAssembledEncoder:
 
   github.com/horizoonn/factory-platform/assembly/internal/api/kafka/orderpaid:
     config:
@@ -27,8 +28,8 @@ packages:
 
   github.com/horizoonn/factory-platform/assembly/internal/outbox/dispatcher:
     config:
-      dir: "assembly/internal/service/mocks"
-      filename: "mock_outbox_dispatcher.go"
+      dir: "assembly/internal/outbox/mocks"
+      filename: "mock_dispatcher.go"
     interfaces:
       Repository:
       Producer:
@@ -41,6 +42,22 @@ packages:
       Repository:
       InventoryClient:
       PaymentClient:
+      OrderPaidEncoder:
+
+  github.com/horizoonn/factory-platform/order/internal/outbox/dispatcher:
+    config:
+      dir: "order/internal/outbox/mocks"
+      filename: "mock_dispatcher.go"
+    interfaces:
+      Repository:
+      Producer:
+
+  github.com/horizoonn/factory-platform/order/internal/api/kafka/shipassembled:
+    config:
+      dir: "order/internal/service/mocks"
+      filename: "mock_ship_assembled_handler.go"
+    interfaces:
+      OrderService:
 
   github.com/horizoonn/factory-platform/inventory/internal/service/part:
     config:
