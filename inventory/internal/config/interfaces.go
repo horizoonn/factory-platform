@@ -9,6 +9,7 @@ import (
 
 type Config interface {
 	InventoryGRPC() InventoryGRPCConfig
+	InventoryHTTP() InventoryHTTPConfig
 	Migrations() MigrationsConfig
 	App() AppConfig
 	Logger() logger.Config
@@ -16,6 +17,10 @@ type Config interface {
 }
 
 type InventoryGRPCConfig interface {
+	Address() string
+}
+
+type InventoryHTTPConfig interface {
 	Address() string
 }
 
