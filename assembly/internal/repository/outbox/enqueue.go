@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 
-	outboxmodel "github.com/horizoonn/factory-platform/assembly/internal/outbox"
+	"github.com/horizoonn/factory-platform/assembly/internal/outbox"
 )
 
-func (r *Repository) Enqueue(ctx context.Context, event outboxmodel.Event) (bool, error) {
+func (r *Repository) Enqueue(ctx context.Context, event outbox.Event) (bool, error) {
 	ctx, cancel := context.WithTimeout(ctx, r.pool.OpTimeout())
 	defer cancel()
 

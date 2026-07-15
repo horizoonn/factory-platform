@@ -21,7 +21,13 @@ func (s *Service) Assemble(ctx context.Context, event domain.OrderPaidEvent) err
 		OccurredAt:   availableAt,
 	}
 
-	if _, err := s.outbox.EnqueueShipAssembled(ctx, event.ID, shipAssembled); err != nil {
+	outboxEvent, err := s.shipAssembledEncoder.Encode(shipAssembled)
+	if err != nil {
+		return fmt.Errorf("encode ShipAssembled event: %w", err)
+	}
+	outboxEvent.SourceEventID = event.ID
+
+	if _, err := s.outbox.Enqueue(ctx, outboxEvent); err != nil {
 		return fmt.Errorf("schedule ShipAssembled event: %w", err)
 	}
 

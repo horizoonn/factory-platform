@@ -7,16 +7,17 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/horizoonn/factory-platform/assembly/internal/domain"
+	"github.com/horizoonn/factory-platform/assembly/internal/outbox"
 )
 
 const buildDuration = 10 * time.Second
 
-type ShipAssembledOutbox interface {
-	EnqueueShipAssembled(
-		ctx context.Context,
-		sourceEventID uuid.UUID,
-		event domain.ShipAssembledEvent,
-	) (bool, error)
+type Outbox interface {
+	Enqueue(ctx context.Context, event outbox.Event) (bool, error)
+}
+
+type ShipAssembledEncoder interface {
+	Encode(event domain.ShipAssembledEvent) (outbox.Event, error)
 }
 
 type IDGenerator func() uuid.UUID
@@ -24,15 +25,17 @@ type IDGenerator func() uuid.UUID
 type Clock func() time.Time
 
 type Service struct {
-	outbox      ShipAssembledOutbox
-	idGenerator IDGenerator
-	clock       Clock
+	outbox               Outbox
+	shipAssembledEncoder ShipAssembledEncoder
+	idGenerator          IDGenerator
+	clock                Clock
 }
 
-func NewService(outbox ShipAssembledOutbox) *Service {
+func NewService(outbox Outbox, shipAssembledEncoder ShipAssembledEncoder) *Service {
 	return &Service{
-		outbox:      outbox,
-		idGenerator: uuid.New,
-		clock:       time.Now,
+		outbox:               outbox,
+		shipAssembledEncoder: shipAssembledEncoder,
+		idGenerator:          uuid.New,
+		clock:                time.Now,
 	}
 }
