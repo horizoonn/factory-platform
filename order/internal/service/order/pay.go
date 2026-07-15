@@ -6,7 +6,6 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/horizoonn/factory-platform/order/internal/client/dto"
 	"github.com/horizoonn/factory-platform/order/internal/domain"
 	servicedto "github.com/horizoonn/factory-platform/order/internal/service/dto"
 )
@@ -26,7 +25,11 @@ func (s *Service) PayOrder(ctx context.Context, req servicedto.PayOrderRequest) 
 
 	order, err := s.repository.GetOrder(ctx, req.OrderID)
 	if err != nil {
-		return domain.Order{}, fmt.Errorf("get order with id='%s' from repository: %w", req.OrderID, err)
+		return domain.Order{}, fmt.Errorf(
+			"get order id=%s from repository: %w",
+			req.OrderID,
+			err,
+		)
 	}
 
 	switch order.Status {
@@ -39,7 +42,7 @@ func (s *Service) PayOrder(ctx context.Context, req servicedto.PayOrderRequest) 
 		return domain.Order{}, domain.ErrInvalidOrderStatus
 	}
 
-	payment, err := s.paymentClient.PayOrder(ctx, dto.PayOrderRequest{
+	payment, err := s.paymentClient.PayOrder(ctx, servicedto.PaymentRequest{
 		OrderID:       req.OrderID,
 		UserID:        order.UserID,
 		PaymentMethod: req.PaymentMethod,
@@ -52,9 +55,23 @@ func (s *Service) PayOrder(ctx context.Context, req servicedto.PayOrderRequest) 
 	order.PaymentMethod = &req.PaymentMethod
 	order.Status = domain.OrderStatusPaid
 
-	updatedOrder, err := s.repository.UpdateOrder(ctx, order)
+	event := domain.OrderPaidEvent{
+		ID:            s.idGenerator(),
+		OrderID:       order.ID,
+		UserID:        order.UserID,
+		PaymentMethod: req.PaymentMethod,
+		TransactionID: payment.TransactionID,
+		OccurredAt:    s.clock().UTC(),
+	}
+
+	outboxEvent, err := s.orderPaidEncoder.Encode(event)
 	if err != nil {
-		return domain.Order{}, fmt.Errorf("update paid order: %w", err)
+		return domain.Order{}, fmt.Errorf("encode OrderPaid event: %w", err)
+	}
+
+	updatedOrder, err := s.repository.MarkPaidAndEnqueueOrderPaid(ctx, order, outboxEvent)
+	if err != nil {
+		return domain.Order{}, fmt.Errorf("mark order paid and enqueue OrderPaid event: %w", err)
 	}
 
 	return updatedOrder, nil

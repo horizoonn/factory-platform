@@ -11,6 +11,7 @@ import (
 
 	"github.com/jackc/pgx/v5/stdlib"
 	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/horizoonn/factory-platform/order/internal/config"
 	"github.com/horizoonn/factory-platform/platform/pkg/database/postgres/migrator"
@@ -36,12 +37,44 @@ func New(cfg config.Config) *App {
 func (a *App) Run(ctx context.Context) error {
 	if err := a.init(ctx); err != nil {
 		a.closeListener(ctx)
-		a.diContainer.Close(ctx)
+		a.close(ctx)
 		return fmt.Errorf("initialize order app: %w", err)
 	}
-	defer a.diContainer.Close(ctx)
-	defer a.closeListener(ctx)
 
+	group, runCtx := errgroup.WithContext(ctx)
+	group.Go(func() error {
+		return componentError("run order http server", a.runHTTP(runCtx))
+	})
+	group.Go(func() error {
+		return componentError("run outbox dispatcher", a.diContainer.OutboxDispatcher().Run(runCtx))
+	})
+	group.Go(func() error {
+		err := a.diContainer.ShipAssembledConsumer().Consume(
+			runCtx,
+			a.diContainer.ShipAssembledHandler(),
+		)
+		return componentError("consume ShipAssembled events", err)
+	})
+
+	logger.Info(ctx, "order service started")
+
+	err := group.Wait()
+	if ctx.Err() != nil {
+		logger.Info(ctx, "shutdown signal received")
+	}
+
+	a.closeListener(ctx)
+	a.close(ctx)
+	if err != nil {
+		return err
+	}
+
+	logger.Info(ctx, "order service stopped")
+
+	return nil
+}
+
+func (a *App) runHTTP(ctx context.Context) error {
 	serveErr := make(chan error, 1)
 	go func() {
 		serveErr <- a.httpServer.Serve(a.listener)
@@ -55,14 +88,9 @@ func (a *App) Run(ctx context.Context) error {
 			return fmt.Errorf("serve order http: %w", err)
 		}
 	case <-ctx.Done():
-		logger.Info(ctx, "shutdown signal received")
 	}
 
-	if err := a.shutdownHTTPServer(ctx); err != nil {
-		return err
-	}
-
-	return nil
+	return a.shutdownHTTPServer(ctx)
 }
 
 func (a *App) init(ctx context.Context) error {
@@ -76,6 +104,18 @@ func (a *App) init(ctx context.Context) error {
 
 	if err := a.diContainer.InitGRPCClients(); err != nil {
 		return fmt.Errorf("create grpc clients: %w", err)
+	}
+
+	if err := a.diContainer.InitOrderPaidProducer(ctx); err != nil {
+		return fmt.Errorf("create OrderPaid kafka producer: %w", err)
+	}
+
+	if err := a.diContainer.InitShipAssembledConsumer(ctx); err != nil {
+		return fmt.Errorf("create ShipAssembled kafka consumer: %w", err)
+	}
+
+	if err := a.diContainer.InitOutboxDispatcher(); err != nil {
+		return fmt.Errorf("create outbox dispatcher: %w", err)
 	}
 
 	if err := a.initHTTPServer(); err != nil {
@@ -148,6 +188,24 @@ func (a *App) closeListener(ctx context.Context) {
 	if err := a.listener.Close(); err != nil && !errors.Is(err, net.ErrClosed) {
 		logger.Warn(ctx, "failed to close order http listener", zap.Error(err))
 	}
+}
+
+func (a *App) close(ctx context.Context) {
+	shutdownCtx, shutdownCancel := context.WithTimeout(
+		context.WithoutCancel(ctx),
+		a.cfg.App().ShutdownTimeout(),
+	)
+	defer shutdownCancel()
+
+	a.diContainer.Close(shutdownCtx)
+}
+
+func componentError(component string, err error) error {
+	if err == nil || errors.Is(err, context.Canceled) {
+		return nil
+	}
+
+	return fmt.Errorf("%s: %w", component, err)
 }
 
 func closeMigrationDB(ctx context.Context, db *sql.DB) {

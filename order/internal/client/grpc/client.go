@@ -17,12 +17,18 @@ type Clients struct {
 }
 
 func NewClients(inventoryAddr, paymentAddr string) (*Clients, error) {
-	inventoryConn, err := grpc.NewClient(inventoryAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	inventoryConn, err := grpc.NewClient(
+		inventoryAddr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("create inventory grpc client: %w", err)
 	}
 
-	paymentConn, err := grpc.NewClient(paymentAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	paymentConn, err := grpc.NewClient(
+		paymentAddr,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
 	if err != nil {
 		if closeErr := inventoryConn.Close(); closeErr != nil {
 			err = fmt.Errorf("close inventory connection: %w; original error: %w", closeErr, err)

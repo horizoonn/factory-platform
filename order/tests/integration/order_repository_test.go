@@ -14,12 +14,13 @@ import (
 
 	"github.com/horizoonn/factory-platform/order/internal/domain"
 	orderrepo "github.com/horizoonn/factory-platform/order/internal/repository/order"
+	outboxrepo "github.com/horizoonn/factory-platform/order/internal/repository/outbox"
 )
 
 func TestOrderRepository_CreateOrder(t *testing.T) {
 	testEnv.truncateOrders(t)
 
-	repository := orderrepo.NewRepository(testEnv.pool)
+	repository := newOrderRepository()
 	expected := baseOrder()
 
 	actual, err := repository.CreateOrder(testContext(t), expected)
@@ -35,7 +36,7 @@ func TestOrderRepository_CreateOrder(t *testing.T) {
 func TestOrderRepository_GetOrder(t *testing.T) {
 	testEnv.truncateOrders(t)
 
-	repository := orderrepo.NewRepository(testEnv.pool)
+	repository := newOrderRepository()
 	expected := insertOrder(t, baseOrder())
 
 	actual, err := repository.GetOrder(testContext(t), expected.ID)
@@ -46,10 +47,10 @@ func TestOrderRepository_GetOrder(t *testing.T) {
 	assert.True(t, expected.UpdatedAt.Equal(actual.UpdatedAt))
 }
 
-func TestOrderRepository_GetOrderNullablePaymentFields(t *testing.T) {
+func TestOrderRepository_GetOrder_NullablePaymentFields(t *testing.T) {
 	testEnv.truncateOrders(t)
 
-	repository := orderrepo.NewRepository(testEnv.pool)
+	repository := newOrderRepository()
 	expected := baseOrder()
 	expected.TransactionID = nil
 	expected.PaymentMethod = nil
@@ -64,10 +65,10 @@ func TestOrderRepository_GetOrderNullablePaymentFields(t *testing.T) {
 	assert.Equal(t, domain.OrderStatusPendingPayment, actual.Status)
 }
 
-func TestOrderRepository_GetOrderNotFound(t *testing.T) {
+func TestOrderRepository_GetOrder_NotFound(t *testing.T) {
 	testEnv.truncateOrders(t)
 
-	repository := orderrepo.NewRepository(testEnv.pool)
+	repository := newOrderRepository()
 
 	_, err := repository.GetOrder(testContext(t), uuid.MustParse("7d4a1f4f-07cc-48b2-b7c7-f6201f982404"))
 
@@ -75,58 +76,64 @@ func TestOrderRepository_GetOrderNotFound(t *testing.T) {
 	assert.True(t, errors.Is(err, domain.ErrNotFound))
 }
 
-func TestOrderRepository_UpdateOrder(t *testing.T) {
+func TestOrderRepository_CancelOrder(t *testing.T) {
 	testEnv.truncateOrders(t)
 
-	repository := orderrepo.NewRepository(testEnv.pool)
+	repository := newOrderRepository()
 	existing := insertOrder(t, baseOrder())
-	transactionID := uuid.MustParse("7d4a1f4f-07cc-48b2-b7c7-f6201f982501")
+	err := repository.CancelOrder(testContext(t), existing.ID)
+
+	require.NoError(t, err)
+	assert.Equal(t, domain.OrderStatusCancelled, orderStatus(t, existing.ID))
+}
+
+func TestOrderRepository_CancelOrder_Idempotent(t *testing.T) {
+	testEnv.truncateOrders(t)
+
+	repository := newOrderRepository()
+	order := baseOrder()
+	order.Status = domain.OrderStatusCancelled
+	insertOrder(t, order)
+
+	err := repository.CancelOrder(testContext(t), order.ID)
+
+	require.NoError(t, err)
+	assert.Equal(t, domain.OrderStatusCancelled, orderStatus(t, order.ID))
+}
+
+func TestOrderRepository_CancelOrder_DoesNotCancelPaidOrder(t *testing.T) {
+	testEnv.truncateOrders(t)
+
+	repository := newOrderRepository()
+	order := baseOrder()
+	transactionID := uuid.New()
 	paymentMethod := domain.PaymentMethodCard
-	existing.TransactionID = &transactionID
-	existing.PaymentMethod = &paymentMethod
-	existing.Status = domain.OrderStatusPaid
+	order.TransactionID = &transactionID
+	order.PaymentMethod = &paymentMethod
+	order.Status = domain.OrderStatusPaid
+	insertOrder(t, order)
 
-	actual, err := repository.UpdateOrder(testContext(t), existing)
+	err := repository.CancelOrder(testContext(t), order.ID)
 
-	require.NoError(t, err)
-	assertOrder(t, existing, actual)
-	require.NotNil(t, actual.TransactionID)
-	assert.Equal(t, transactionID, *actual.TransactionID)
-	require.NotNil(t, actual.PaymentMethod)
-	assert.Equal(t, paymentMethod, *actual.PaymentMethod)
-	assert.True(t, actual.UpdatedAt.After(existing.UpdatedAt) || actual.UpdatedAt.Equal(existing.UpdatedAt))
+	require.Error(t, err)
+	assert.ErrorIs(t, err, domain.ErrOrderAlreadyPaid)
+	assert.Equal(t, domain.OrderStatusPaid, orderStatus(t, order.ID))
 }
 
-func TestOrderRepository_UpdateOrderToCancelled(t *testing.T) {
+func TestOrderRepository_CancelOrder_NotFound(t *testing.T) {
 	testEnv.truncateOrders(t)
 
-	repository := orderrepo.NewRepository(testEnv.pool)
-	existing := insertOrder(t, baseOrder())
-	existing.Status = domain.OrderStatusCancelled
-
-	actual, err := repository.UpdateOrder(testContext(t), existing)
-
-	require.NoError(t, err)
-	assert.Nil(t, actual.TransactionID)
-	assert.Nil(t, actual.PaymentMethod)
-	assert.Equal(t, domain.OrderStatusCancelled, actual.Status)
-}
-
-func TestOrderRepository_UpdateOrderNotFound(t *testing.T) {
-	testEnv.truncateOrders(t)
-
-	repository := orderrepo.NewRepository(testEnv.pool)
-
-	_, err := repository.UpdateOrder(testContext(t), baseOrder())
+	repository := newOrderRepository()
+	err := repository.CancelOrder(testContext(t), baseOrder().ID)
 
 	require.Error(t, err)
 	assert.True(t, errors.Is(err, domain.ErrNotFound))
 }
 
-func TestOrderRepository_CreateOrderRejectsEmptyPartIDs(t *testing.T) {
+func TestOrderRepository_CreateOrder_RejectsEmptyPartIDs(t *testing.T) {
 	testEnv.truncateOrders(t)
 
-	repository := orderrepo.NewRepository(testEnv.pool)
+	repository := newOrderRepository()
 	order := baseOrder()
 	order.PartIDs = nil
 
@@ -196,4 +203,11 @@ func nullablePaymentMethod(method *domain.PaymentMethod) sql.NullString {
 	}
 
 	return sql.NullString{String: string(*method), Valid: true}
+}
+
+func newOrderRepository() *orderrepo.Repository {
+	return orderrepo.NewRepository(
+		testEnv.pool,
+		outboxrepo.NewRepository(testEnv.pool),
+	)
 }

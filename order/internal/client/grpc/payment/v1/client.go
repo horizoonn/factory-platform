@@ -5,7 +5,7 @@ import (
 
 	"google.golang.org/grpc"
 
-	"github.com/horizoonn/factory-platform/order/internal/client/dto"
+	servicedto "github.com/horizoonn/factory-platform/order/internal/service/dto"
 	paymentpb "github.com/horizoonn/factory-platform/shared/pkg/proto/payment/v1"
 )
 
@@ -19,6 +19,6 @@ func NewClient(conn grpc.ClientConnInterface) *Client {
 	}
 }
 
-func (c *Client) PayOrder(ctx context.Context, req dto.PayOrderRequest) (dto.PayOrderResponse, error) {
+func (c *Client) PayOrder(ctx context.Context, req servicedto.PaymentRequest) (servicedto.PaymentResponse, error) {
 	return c.payOrder(ctx, req)
 }

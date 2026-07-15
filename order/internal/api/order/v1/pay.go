@@ -10,7 +10,11 @@ import (
 	orderopenapi "github.com/horizoonn/factory-platform/shared/pkg/openapi/order/v1"
 )
 
-func (h *Handler) PayOrder(ctx context.Context, req *orderopenapi.PayOrderRequest, params orderopenapi.PayOrderParams) (orderopenapi.PayOrderRes, error) {
+func (h *Handler) PayOrder(
+	ctx context.Context,
+	req *orderopenapi.PayOrderRequest,
+	params orderopenapi.PayOrderParams,
+) (orderopenapi.PayOrderRes, error) {
 	if h.service == nil {
 		return nil, domain.ErrNotImplemented
 	}

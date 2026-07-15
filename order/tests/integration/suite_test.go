@@ -118,6 +118,20 @@ func (e *environment) truncateOrders(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func (e *environment) truncateOutbox(t *testing.T) {
+	t.Helper()
+
+	_, err := e.pool.Exec(testContext(t), "TRUNCATE TABLE platform.order_outbox_events")
+	require.NoError(t, err)
+}
+
+func (e *environment) truncateInbox(t *testing.T) {
+	t.Helper()
+
+	_, err := e.pool.Exec(testContext(t), "TRUNCATE TABLE platform.order_inbox_events")
+	require.NoError(t, err)
+}
+
 func testContext(t *testing.T) context.Context {
 	t.Helper()
 

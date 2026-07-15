@@ -23,13 +23,21 @@ func OrderModelToDomain(m model.Order) (domain.Order, error) {
 	if m.PaymentMethod.Valid {
 		method := domain.PaymentMethod(m.PaymentMethod.String)
 		if !method.Valid() {
-			return domain.Order{}, fmt.Errorf("invalid payment method %q: %w", m.PaymentMethod.String, domain.ErrInvalidPaymentMethod)
+			return domain.Order{}, fmt.Errorf(
+				"invalid payment method %q: %w",
+				m.PaymentMethod.String,
+				domain.ErrInvalidPaymentMethod,
+			)
 		}
 		order.PaymentMethod = &method
 	}
 
 	if !order.Status.Valid() {
-		return domain.Order{}, fmt.Errorf("invalid order status %q: %w", m.Status, domain.ErrInvalidOrderStatus)
+		return domain.Order{}, fmt.Errorf(
+			"invalid order status %q: %w",
+			m.Status,
+			domain.ErrInvalidOrderStatus,
+		)
 	}
 
 	return order, nil

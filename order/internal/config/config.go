@@ -4,18 +4,24 @@ import (
 	"fmt"
 
 	"github.com/horizoonn/factory-platform/order/internal/config/env"
+	outboxdispatcher "github.com/horizoonn/factory-platform/order/internal/outbox/dispatcher"
 	pgxpool "github.com/horizoonn/factory-platform/platform/pkg/database/postgres/pool/pgx"
+	consumerfranz "github.com/horizoonn/factory-platform/platform/pkg/kafka/consumer/franz"
+	producerfranz "github.com/horizoonn/factory-platform/platform/pkg/kafka/producer/franz"
 	"github.com/horizoonn/factory-platform/platform/pkg/logger"
 )
 
 type envConfig struct {
-	orderHTTP     OrderHTTPConfig
-	inventoryGRPC InventoryGRPCConfig
-	paymentGRPC   PaymentGRPCConfig
-	migrations    MigrationsConfig
-	app           AppConfig
-	logger        logger.Config
-	postgres      pgxpool.Config
+	orderHTTP             OrderHTTPConfig
+	inventoryGRPC         InventoryGRPCConfig
+	paymentGRPC           PaymentGRPCConfig
+	migrations            MigrationsConfig
+	app                   AppConfig
+	logger                logger.Config
+	postgres              pgxpool.Config
+	orderPaidProducer     producerfranz.Config
+	shipAssembledConsumer consumerfranz.Config
+	outboxDispatcher      outboxdispatcher.Config
 }
 
 func NewConfig() (Config, error) {
@@ -54,14 +60,44 @@ func NewConfig() (Config, error) {
 		return nil, fmt.Errorf("get postgres config: %w", err)
 	}
 
+	brokers, err := env.NewKafkaBrokers()
+	if err != nil {
+		return nil, fmt.Errorf("get kafka brokers: %w", err)
+	}
+
+	orderPaidProducerConfig, err := env.NewOrderPaidProducerConfig(brokers)
+	if err != nil {
+		return nil, fmt.Errorf("get order paid producer config: %w", err)
+	}
+
+	shipAssembledConsumerConfig, err := env.NewShipAssembledConsumerConfig(brokers)
+	if err != nil {
+		return nil, fmt.Errorf("get ship assembled consumer config: %w", err)
+	}
+
+	outboxDispatcherConfig, err := env.NewOutboxDispatcherConfig()
+	if err != nil {
+		return nil, fmt.Errorf("get outbox dispatcher config: %w", err)
+	}
+	if orderPaidProducerConfig.DeliveryTimeout > outboxDispatcherConfig.PublishTimeout {
+		return nil, fmt.Errorf(
+			"order paid producer delivery timeout %s exceeds outbox publish timeout %s",
+			orderPaidProducerConfig.DeliveryTimeout,
+			outboxDispatcherConfig.PublishTimeout,
+		)
+	}
+
 	return envConfig{
-		orderHTTP:     orderHTTPConfig,
-		inventoryGRPC: inventoryGRPCConfig,
-		paymentGRPC:   paymentGRPCConfig,
-		migrations:    migrationsConfig,
-		app:           appConfig,
-		logger:        loggerConfig,
-		postgres:      postgresConfig,
+		orderHTTP:             orderHTTPConfig,
+		inventoryGRPC:         inventoryGRPCConfig,
+		paymentGRPC:           paymentGRPCConfig,
+		migrations:            migrationsConfig,
+		app:                   appConfig,
+		logger:                loggerConfig,
+		postgres:              postgresConfig,
+		orderPaidProducer:     orderPaidProducerConfig,
+		shipAssembledConsumer: shipAssembledConsumerConfig,
+		outboxDispatcher:      outboxDispatcherConfig,
 	}, nil
 }
 
@@ -101,4 +137,16 @@ func (c envConfig) Logger() logger.Config {
 
 func (c envConfig) Postgres() pgxpool.Config {
 	return c.postgres
+}
+
+func (c envConfig) OrderPaidProducer() producerfranz.Config {
+	return c.orderPaidProducer
+}
+
+func (c envConfig) ShipAssembledConsumer() consumerfranz.Config {
+	return c.shipAssembledConsumer
+}
+
+func (c envConfig) OutboxDispatcher() outboxdispatcher.Config {
+	return c.outboxDispatcher
 }

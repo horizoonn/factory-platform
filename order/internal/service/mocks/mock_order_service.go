@@ -8,8 +8,9 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/horizoonn/factory-platform/order/internal/client/dto"
 	"github.com/horizoonn/factory-platform/order/internal/domain"
+	"github.com/horizoonn/factory-platform/order/internal/outbox"
+	"github.com/horizoonn/factory-platform/order/internal/service/dto"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -38,6 +39,120 @@ type Repository_Expecter struct {
 
 func (_m *Repository) EXPECT() *Repository_Expecter {
 	return &Repository_Expecter{mock: &_m.Mock}
+}
+
+// CancelOrder provides a mock function for the type Repository
+func (_mock *Repository) CancelOrder(ctx context.Context, orderID uuid.UUID) error {
+	ret := _mock.Called(ctx, orderID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CancelOrder")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) error); ok {
+		r0 = returnFunc(ctx, orderID)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Repository_CancelOrder_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CancelOrder'
+type Repository_CancelOrder_Call struct {
+	*mock.Call
+}
+
+// CancelOrder is a helper method to define mock.On call
+//   - ctx context.Context
+//   - orderID uuid.UUID
+func (_e *Repository_Expecter) CancelOrder(ctx any, orderID any) *Repository_CancelOrder_Call {
+	return &Repository_CancelOrder_Call{Call: _e.mock.On("CancelOrder", ctx, orderID)}
+}
+
+func (_c *Repository_CancelOrder_Call) Run(run func(ctx context.Context, orderID uuid.UUID)) *Repository_CancelOrder_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 uuid.UUID
+		if args[1] != nil {
+			arg1 = args[1].(uuid.UUID)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *Repository_CancelOrder_Call) Return(err error) *Repository_CancelOrder_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Repository_CancelOrder_Call) RunAndReturn(run func(ctx context.Context, orderID uuid.UUID) error) *Repository_CancelOrder_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CompleteOrder provides a mock function for the type Repository
+func (_mock *Repository) CompleteOrder(ctx context.Context, event domain.ShipAssembledEvent) error {
+	ret := _mock.Called(ctx, event)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CompleteOrder")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.ShipAssembledEvent) error); ok {
+		r0 = returnFunc(ctx, event)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Repository_CompleteOrder_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CompleteOrder'
+type Repository_CompleteOrder_Call struct {
+	*mock.Call
+}
+
+// CompleteOrder is a helper method to define mock.On call
+//   - ctx context.Context
+//   - event domain.ShipAssembledEvent
+func (_e *Repository_Expecter) CompleteOrder(ctx any, event any) *Repository_CompleteOrder_Call {
+	return &Repository_CompleteOrder_Call{Call: _e.mock.On("CompleteOrder", ctx, event)}
+}
+
+func (_c *Repository_CompleteOrder_Call) Run(run func(ctx context.Context, event domain.ShipAssembledEvent)) *Repository_CompleteOrder_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 domain.ShipAssembledEvent
+		if args[1] != nil {
+			arg1 = args[1].(domain.ShipAssembledEvent)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *Repository_CompleteOrder_Call) Return(err error) *Repository_CompleteOrder_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Repository_CompleteOrder_Call) RunAndReturn(run func(ctx context.Context, event domain.ShipAssembledEvent) error) *Repository_CompleteOrder_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // CreateOrder provides a mock function for the type Repository
@@ -107,8 +222,8 @@ func (_c *Repository_CreateOrder_Call) RunAndReturn(run func(ctx context.Context
 }
 
 // GetOrder provides a mock function for the type Repository
-func (_mock *Repository) GetOrder(ctx context.Context, id uuid.UUID) (domain.Order, error) {
-	ret := _mock.Called(ctx, id)
+func (_mock *Repository) GetOrder(ctx context.Context, orderID uuid.UUID) (domain.Order, error) {
+	ret := _mock.Called(ctx, orderID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetOrder")
@@ -117,15 +232,15 @@ func (_mock *Repository) GetOrder(ctx context.Context, id uuid.UUID) (domain.Ord
 	var r0 domain.Order
 	var r1 error
 	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) (domain.Order, error)); ok {
-		return returnFunc(ctx, id)
+		return returnFunc(ctx, orderID)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) domain.Order); ok {
-		r0 = returnFunc(ctx, id)
+		r0 = returnFunc(ctx, orderID)
 	} else {
 		r0 = ret.Get(0).(domain.Order)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
-		r1 = returnFunc(ctx, id)
+		r1 = returnFunc(ctx, orderID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -139,12 +254,12 @@ type Repository_GetOrder_Call struct {
 
 // GetOrder is a helper method to define mock.On call
 //   - ctx context.Context
-//   - id uuid.UUID
-func (_e *Repository_Expecter) GetOrder(ctx any, id any) *Repository_GetOrder_Call {
-	return &Repository_GetOrder_Call{Call: _e.mock.On("GetOrder", ctx, id)}
+//   - orderID uuid.UUID
+func (_e *Repository_Expecter) GetOrder(ctx any, orderID any) *Repository_GetOrder_Call {
+	return &Repository_GetOrder_Call{Call: _e.mock.On("GetOrder", ctx, orderID)}
 }
 
-func (_c *Repository_GetOrder_Call) Run(run func(ctx context.Context, id uuid.UUID)) *Repository_GetOrder_Call {
+func (_c *Repository_GetOrder_Call) Run(run func(ctx context.Context, orderID uuid.UUID)) *Repository_GetOrder_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -167,50 +282,51 @@ func (_c *Repository_GetOrder_Call) Return(order domain.Order, err error) *Repos
 	return _c
 }
 
-func (_c *Repository_GetOrder_Call) RunAndReturn(run func(ctx context.Context, id uuid.UUID) (domain.Order, error)) *Repository_GetOrder_Call {
+func (_c *Repository_GetOrder_Call) RunAndReturn(run func(ctx context.Context, orderID uuid.UUID) (domain.Order, error)) *Repository_GetOrder_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// UpdateOrder provides a mock function for the type Repository
-func (_mock *Repository) UpdateOrder(ctx context.Context, order domain.Order) (domain.Order, error) {
-	ret := _mock.Called(ctx, order)
+// MarkPaidAndEnqueueOrderPaid provides a mock function for the type Repository
+func (_mock *Repository) MarkPaidAndEnqueueOrderPaid(ctx context.Context, order domain.Order, event outbox.Event) (domain.Order, error) {
+	ret := _mock.Called(ctx, order, event)
 
 	if len(ret) == 0 {
-		panic("no return value specified for UpdateOrder")
+		panic("no return value specified for MarkPaidAndEnqueueOrderPaid")
 	}
 
 	var r0 domain.Order
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.Order) (domain.Order, error)); ok {
-		return returnFunc(ctx, order)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.Order, outbox.Event) (domain.Order, error)); ok {
+		return returnFunc(ctx, order, event)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.Order) domain.Order); ok {
-		r0 = returnFunc(ctx, order)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, domain.Order, outbox.Event) domain.Order); ok {
+		r0 = returnFunc(ctx, order, event)
 	} else {
 		r0 = ret.Get(0).(domain.Order)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, domain.Order) error); ok {
-		r1 = returnFunc(ctx, order)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, domain.Order, outbox.Event) error); ok {
+		r1 = returnFunc(ctx, order, event)
 	} else {
 		r1 = ret.Error(1)
 	}
 	return r0, r1
 }
 
-// Repository_UpdateOrder_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateOrder'
-type Repository_UpdateOrder_Call struct {
+// Repository_MarkPaidAndEnqueueOrderPaid_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'MarkPaidAndEnqueueOrderPaid'
+type Repository_MarkPaidAndEnqueueOrderPaid_Call struct {
 	*mock.Call
 }
 
-// UpdateOrder is a helper method to define mock.On call
+// MarkPaidAndEnqueueOrderPaid is a helper method to define mock.On call
 //   - ctx context.Context
 //   - order domain.Order
-func (_e *Repository_Expecter) UpdateOrder(ctx any, order any) *Repository_UpdateOrder_Call {
-	return &Repository_UpdateOrder_Call{Call: _e.mock.On("UpdateOrder", ctx, order)}
+//   - event outbox.Event
+func (_e *Repository_Expecter) MarkPaidAndEnqueueOrderPaid(ctx any, order any, event any) *Repository_MarkPaidAndEnqueueOrderPaid_Call {
+	return &Repository_MarkPaidAndEnqueueOrderPaid_Call{Call: _e.mock.On("MarkPaidAndEnqueueOrderPaid", ctx, order, event)}
 }
 
-func (_c *Repository_UpdateOrder_Call) Run(run func(ctx context.Context, order domain.Order)) *Repository_UpdateOrder_Call {
+func (_c *Repository_MarkPaidAndEnqueueOrderPaid_Call) Run(run func(ctx context.Context, order domain.Order, event outbox.Event)) *Repository_MarkPaidAndEnqueueOrderPaid_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -220,20 +336,25 @@ func (_c *Repository_UpdateOrder_Call) Run(run func(ctx context.Context, order d
 		if args[1] != nil {
 			arg1 = args[1].(domain.Order)
 		}
+		var arg2 outbox.Event
+		if args[2] != nil {
+			arg2 = args[2].(outbox.Event)
+		}
 		run(
 			arg0,
 			arg1,
+			arg2,
 		)
 	})
 	return _c
 }
 
-func (_c *Repository_UpdateOrder_Call) Return(order1 domain.Order, err error) *Repository_UpdateOrder_Call {
+func (_c *Repository_MarkPaidAndEnqueueOrderPaid_Call) Return(order1 domain.Order, err error) *Repository_MarkPaidAndEnqueueOrderPaid_Call {
 	_c.Call.Return(order1, err)
 	return _c
 }
 
-func (_c *Repository_UpdateOrder_Call) RunAndReturn(run func(ctx context.Context, order domain.Order) (domain.Order, error)) *Repository_UpdateOrder_Call {
+func (_c *Repository_MarkPaidAndEnqueueOrderPaid_Call) RunAndReturn(run func(ctx context.Context, order domain.Order, event outbox.Event) (domain.Order, error)) *Repository_MarkPaidAndEnqueueOrderPaid_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -361,24 +482,24 @@ func (_m *PaymentClient) EXPECT() *PaymentClient_Expecter {
 }
 
 // PayOrder provides a mock function for the type PaymentClient
-func (_mock *PaymentClient) PayOrder(ctx context.Context, req dto.PayOrderRequest) (dto.PayOrderResponse, error) {
+func (_mock *PaymentClient) PayOrder(ctx context.Context, req dto.PaymentRequest) (dto.PaymentResponse, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for PayOrder")
 	}
 
-	var r0 dto.PayOrderResponse
+	var r0 dto.PaymentResponse
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, dto.PayOrderRequest) (dto.PayOrderResponse, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, dto.PaymentRequest) (dto.PaymentResponse, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, dto.PayOrderRequest) dto.PayOrderResponse); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, dto.PaymentRequest) dto.PaymentResponse); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
-		r0 = ret.Get(0).(dto.PayOrderResponse)
+		r0 = ret.Get(0).(dto.PaymentResponse)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, dto.PayOrderRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, dto.PaymentRequest) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -393,20 +514,20 @@ type PaymentClient_PayOrder_Call struct {
 
 // PayOrder is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req dto.PayOrderRequest
+//   - req dto.PaymentRequest
 func (_e *PaymentClient_Expecter) PayOrder(ctx any, req any) *PaymentClient_PayOrder_Call {
 	return &PaymentClient_PayOrder_Call{Call: _e.mock.On("PayOrder", ctx, req)}
 }
 
-func (_c *PaymentClient_PayOrder_Call) Run(run func(ctx context.Context, req dto.PayOrderRequest)) *PaymentClient_PayOrder_Call {
+func (_c *PaymentClient_PayOrder_Call) Run(run func(ctx context.Context, req dto.PaymentRequest)) *PaymentClient_PayOrder_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 dto.PayOrderRequest
+		var arg1 dto.PaymentRequest
 		if args[1] != nil {
-			arg1 = args[1].(dto.PayOrderRequest)
+			arg1 = args[1].(dto.PaymentRequest)
 		}
 		run(
 			arg0,
@@ -416,12 +537,99 @@ func (_c *PaymentClient_PayOrder_Call) Run(run func(ctx context.Context, req dto
 	return _c
 }
 
-func (_c *PaymentClient_PayOrder_Call) Return(payOrderResponse dto.PayOrderResponse, err error) *PaymentClient_PayOrder_Call {
-	_c.Call.Return(payOrderResponse, err)
+func (_c *PaymentClient_PayOrder_Call) Return(paymentResponse dto.PaymentResponse, err error) *PaymentClient_PayOrder_Call {
+	_c.Call.Return(paymentResponse, err)
 	return _c
 }
 
-func (_c *PaymentClient_PayOrder_Call) RunAndReturn(run func(ctx context.Context, req dto.PayOrderRequest) (dto.PayOrderResponse, error)) *PaymentClient_PayOrder_Call {
+func (_c *PaymentClient_PayOrder_Call) RunAndReturn(run func(ctx context.Context, req dto.PaymentRequest) (dto.PaymentResponse, error)) *PaymentClient_PayOrder_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// NewOrderPaidEncoder creates a new instance of OrderPaidEncoder. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
+// The first argument is typically a *testing.T value.
+func NewOrderPaidEncoder(t interface {
+	mock.TestingT
+	Cleanup(func())
+}) *OrderPaidEncoder {
+	mock := &OrderPaidEncoder{}
+	mock.Mock.Test(t)
+
+	t.Cleanup(func() { mock.AssertExpectations(t) })
+
+	return mock
+}
+
+// OrderPaidEncoder is an autogenerated mock type for the OrderPaidEncoder type
+type OrderPaidEncoder struct {
+	mock.Mock
+}
+
+type OrderPaidEncoder_Expecter struct {
+	mock *mock.Mock
+}
+
+func (_m *OrderPaidEncoder) EXPECT() *OrderPaidEncoder_Expecter {
+	return &OrderPaidEncoder_Expecter{mock: &_m.Mock}
+}
+
+// Encode provides a mock function for the type OrderPaidEncoder
+func (_mock *OrderPaidEncoder) Encode(event domain.OrderPaidEvent) (outbox.Event, error) {
+	ret := _mock.Called(event)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Encode")
+	}
+
+	var r0 outbox.Event
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(domain.OrderPaidEvent) (outbox.Event, error)); ok {
+		return returnFunc(event)
+	}
+	if returnFunc, ok := ret.Get(0).(func(domain.OrderPaidEvent) outbox.Event); ok {
+		r0 = returnFunc(event)
+	} else {
+		r0 = ret.Get(0).(outbox.Event)
+	}
+	if returnFunc, ok := ret.Get(1).(func(domain.OrderPaidEvent) error); ok {
+		r1 = returnFunc(event)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// OrderPaidEncoder_Encode_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Encode'
+type OrderPaidEncoder_Encode_Call struct {
+	*mock.Call
+}
+
+// Encode is a helper method to define mock.On call
+//   - event domain.OrderPaidEvent
+func (_e *OrderPaidEncoder_Expecter) Encode(event any) *OrderPaidEncoder_Encode_Call {
+	return &OrderPaidEncoder_Encode_Call{Call: _e.mock.On("Encode", event)}
+}
+
+func (_c *OrderPaidEncoder_Encode_Call) Run(run func(event domain.OrderPaidEvent)) *OrderPaidEncoder_Encode_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 domain.OrderPaidEvent
+		if args[0] != nil {
+			arg0 = args[0].(domain.OrderPaidEvent)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *OrderPaidEncoder_Encode_Call) Return(event1 outbox.Event, err error) *OrderPaidEncoder_Encode_Call {
+	_c.Call.Return(event1, err)
+	return _c
+}
+
+func (_c *OrderPaidEncoder_Encode_Call) RunAndReturn(run func(event domain.OrderPaidEvent) (outbox.Event, error)) *OrderPaidEncoder_Encode_Call {
 	_c.Call.Return(run)
 	return _c
 }
