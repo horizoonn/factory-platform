@@ -20,6 +20,7 @@ import (
 	consumerfranz "github.com/horizoonn/factory-platform/platform/pkg/kafka/consumer/franz"
 	producerfranz "github.com/horizoonn/factory-platform/platform/pkg/kafka/producer/franz"
 	"github.com/horizoonn/factory-platform/platform/pkg/logger"
+	kafkamiddleware "github.com/horizoonn/factory-platform/platform/pkg/middleware/kafka"
 )
 
 type diContainer struct {
@@ -62,6 +63,7 @@ func (d *diContainer) InitOrderPaidConsumer(ctx context.Context) error {
 	kafkaConsumer, err := consumerfranz.NewConsumer(
 		d.cfg.OrderPaidConsumer(),
 		consumerfranz.WithLogger(logger.Default()),
+		consumerfranz.WithMiddlewares(kafkamiddleware.Logging(logger.Default())),
 	)
 	if err != nil {
 		return err
