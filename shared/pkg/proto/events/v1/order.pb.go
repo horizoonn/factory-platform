@@ -230,7 +230,6 @@ var (
 		(*timestamppb.Timestamp)(nil), // 2: google.protobuf.Timestamp
 	}
 )
-
 var file_events_v1_order_proto_depIdxs = []int32{
 	2, // 0: events.v1.OrderPaid.occurred_at:type_name -> google.protobuf.Timestamp
 	2, // 1: events.v1.ShipAssembled.occurred_at:type_name -> google.protobuf.Timestamp

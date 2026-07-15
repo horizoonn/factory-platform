@@ -1,15 +1,17 @@
 version: v2
-deps:
-  - buf.build/bufbuild/protovalidate
-
 modules:
   - path: .
+    excludes:
+      - vendor
+  - path: vendor
 
 lint:
   use:
     - STANDARD
     - COMMENT_ENUM
     - COMMENT_MESSAGE
+  ignore:
+    - vendor
   except:
     - RPC_RESPONSE_STANDARD_NAME
     - RPC_REQUEST_RESPONSE_UNIQUE

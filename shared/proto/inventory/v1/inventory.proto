@@ -3,104 +3,109 @@ syntax = "proto3";
 package inventory.v1;
 
 import "buf/validate/validate.proto";
+import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/horizoonn/factory-platform/shared/pkg/proto/inventory/v1;inventoryv1";
 
 service InventoryService {
-    rpc GetPart(GetPartRequest) returns (GetPartResponse);
+  rpc GetPart(GetPartRequest) returns (GetPartResponse) {
+    option (google.api.http) = {get: "/api/v1/parts/{uuid}"};
+  }
 
-    rpc ListParts(ListPartsRequest) returns (ListPartsResponse);
+  rpc ListParts(ListPartsRequest) returns (ListPartsResponse) {
+    option (google.api.http) = {get: "/api/v1/parts"};
+  }
 }
 
 // Part — деталь на складе.
 message Part {
-    string uuid = 1;
-    string name = 2;
-    string description = 3;
-    double price = 4;
-    int64 stock_quantity = 5;
-    Category category = 6;
-    Dimensions dimensions = 7;
-    Manufacturer manufacturer = 8;
-    repeated string tags = 9;
-    map<string, Value> metadata = 10;
-    google.protobuf.Timestamp created_at = 11;
-    google.protobuf.Timestamp updated_at = 12;
+  string uuid = 1;
+  string name = 2;
+  string description = 3;
+  double price = 4;
+  int64 stock_quantity = 5;
+  Category category = 6;
+  Dimensions dimensions = 7;
+  Manufacturer manufacturer = 8;
+  repeated string tags = 9;
+  map<string, Value> metadata = 10;
+  google.protobuf.Timestamp created_at = 11;
+  google.protobuf.Timestamp updated_at = 12;
 }
 
 // Category — категория детали.
 enum Category {
-    CATEGORY_UNSPECIFIED = 0;
-    CATEGORY_ENGINE = 1;
-    CATEGORY_FUEL = 2;
-    CATEGORY_PORTHOLE = 3;
-    CATEGORY_WING = 4;
+  CATEGORY_UNSPECIFIED = 0;
+  CATEGORY_ENGINE = 1;
+  CATEGORY_FUEL = 2;
+  CATEGORY_PORTHOLE = 3;
+  CATEGORY_WING = 4;
 }
 
 // Dimensions — габариты и вес детали.
 message Dimensions {
-    double length = 1;
-    double width = 2;
-    double height = 3;
-    double weight = 4;
+  double length = 1;
+  double width = 2;
+  double height = 3;
+  double weight = 4;
 }
 
 // Manufacturer — производитель детали.
 message Manufacturer {
-    string name = 1;
-    string country = 2;
-    string website = 3;
+  string name = 1;
+  string country = 2;
+  string website = 3;
 }
 
 // Value — типизированное значение метаданных.
 message Value {
-    oneof kind {
-      string string_value = 1;
-      int64 int64_value = 2;
-      double double_value = 3;
-      bool bool_value = 4;
-    }
+  oneof kind {
+    string string_value = 1;
+    int64 int64_value = 2;
+    double double_value = 3;
+    bool bool_value = 4;
+  }
 }
 
 // PartsFilter — фильтр для списка деталей.
 message PartsFilter {
-    repeated string uuids = 1 [(buf.validate.field).repeated.items = {
-      string: { uuid: true }
-    }];
-    repeated string names = 2 [(buf.validate.field).repeated.items = {
-      string: { min_len: 1 }
-    }];
-    repeated Category categories = 3 [(buf.validate.field).repeated.items = {
-      enum: {
-        defined_only: true
-        not_in: 0
-      }
-    }];
-    repeated string manufacturer_countries = 4 [(buf.validate.field).repeated.items = {
-      string: { min_len: 1 }
-    }];
-    repeated string tags = 5 [(buf.validate.field).repeated.items = {
-      string: { min_len: 1 }
-    }];
+  repeated string uuids = 1 [(buf.validate.field).repeated.items = {
+    string: {uuid: true}
+  }];
+  repeated string names = 2 [(buf.validate.field).repeated.items = {
+    string: {min_len: 1}
+  }];
+  repeated Category categories = 3 [(buf.validate.field).repeated.items = {
+    enum: {
+      defined_only: true
+      not_in: 0
+    }
+  }];
+  repeated string manufacturer_countries = 4 [(buf.validate.field).repeated.items = {
+    string: {min_len: 1}
+  }];
+  repeated string tags = 5 [(buf.validate.field).repeated.items = {
+    string: {min_len: 1}
+  }];
 }
 
 // GetPartRequest — запрос получения детали по UUID.
 message GetPartRequest {
-    string uuid = 1 [(buf.validate.field).string.uuid = true];
+  string uuid = 1 [(buf.validate.field).string.uuid = true];
 }
 
 // GetPartResponse — ответ с запрошенной деталью.
 message GetPartResponse {
-    Part part = 1;
+  Part part = 1;
 }
 
 // ListPartsRequest — запрос списка деталей с фильтром.
 message ListPartsRequest {
-    PartsFilter filter = 1;
+  PartsFilter filter = 1;
 }
 
 // ListPartsResponse — ответ со списком деталей.
 message ListPartsResponse {
-    repeated Part parts = 1;
+  repeated Part parts = 1;
 }
